@@ -1,17 +1,28 @@
 import { useState } from 'react'
-import { Plus, Tag, ArrowUpCircle, ArrowDownCircle, Loader2 } from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
+import { Plus, Tag, ArrowUpCircle, ArrowDownCircle, Loader2, Pencil, Trash2 } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../services/api'
 import CategoryModal from '../components/CategoryModal'
 
 const Categories = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingCategory, setEditingCategory] = useState<any>(null)
+  const queryClient = useQueryClient()
   
   const { data: categories, isLoading } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
       const response = await api.get('/categories')
       return response.data
+    }
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await api.delete(`/categories/${id}`)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] })
     }
   })
 
@@ -60,6 +71,27 @@ const Categories = () => {
                   </div>
                 </div>
               </div>
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                <button 
+                  onClick={() => {
+                    setEditingCategory(c)
+                    setIsModalOpen(true)
+                  }}
+                  className="p-2 text-slate-500 hover:text-sky-400 transition-all"
+                >
+                  <Pencil className="w-5 h-5" />
+                </button>
+                <button 
+                  onClick={() => {
+                    if (confirm('Tem certeza que deseja excluir esta categoria?')) {
+                      deleteMutation.mutate(c.id)
+                    }
+                  }}
+                  className="p-2 text-slate-500 hover:text-rose-400 transition-all"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              </div>
             </div>
           ))}
 
@@ -80,7 +112,11 @@ const Categories = () => {
 
       <CategoryModal 
         isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+        onClose={() => {
+          setIsModalOpen(false)
+          setEditingCategory(null)
+        }}
+        editingCategory={editingCategory}
       />
     </div>
   )

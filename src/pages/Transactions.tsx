@@ -7,6 +7,7 @@ import TransactionModal from '../components/TransactionModal'
 const Transactions = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<any>(null)
+  const [tipoTransacao, setTipoTransacao] = useState<'receita' | 'despesa'>('despesa')
   const queryClient = useQueryClient()
   
   const { data: transactions, isLoading } = useQuery({
@@ -34,7 +35,10 @@ const Transactions = () => {
           <p className="text-slate-400 mt-1">Gerencie seu histórico financeiro aqui.</p>
         </div>
         <button 
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            setTipoTransacao('despesa')
+            setIsModalOpen(true)
+          }}
           className="btn-primary flex items-center gap-2"
         >
           <Plus className="w-5 h-5" />
@@ -131,6 +135,7 @@ const Transactions = () => {
           setEditingTransaction(null)
         }} 
         editingTransaction={editingTransaction}
+        tipoInicial={editingTransaction ? editingTransaction.tipo?.toLowerCase() : tipoTransacao}
       />
     </div>
   )

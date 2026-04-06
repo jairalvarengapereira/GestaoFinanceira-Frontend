@@ -3,7 +3,7 @@ import { X, DollarSign, Calendar, Type, Tag as TagIcon, Loader2, CreditCard } fr
 import { useQueryClient, useMutation } from '@tanstack/react-query'
 import api from '../services/api'
 
-const TransactionModal = ({ isOpen, onClose, editingTransaction = null }: any) => {
+const TransactionModal = ({ isOpen, onClose, editingTransaction = null, tipoInicial = 'despesa' }: any) => {
   const queryClient = useQueryClient()
   const [tipo, setTipo] = useState<'receita' | 'despesa'>('despesa')
   const [descricao, setDescricao] = useState('')
@@ -26,10 +26,11 @@ const TransactionModal = ({ isOpen, onClose, editingTransaction = null }: any) =
         setCategoriaId(editingTransaction.categoriaId?.toString() || '')
         setStatus(editingTransaction.status?.toLowerCase() || 'pago')
       } else {
+        setTipo(tipoInicial)
         resetForm()
       }
     }
-  }, [isOpen, editingTransaction])
+  }, [isOpen, editingTransaction, tipoInicial])
 
   const createMutation = useMutation({
     mutationFn: (newTransaction: any) => api.post('/transactions', newTransaction),

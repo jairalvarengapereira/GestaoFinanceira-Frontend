@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { X, Loader2, Tag } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../services/api'
@@ -6,15 +6,36 @@ import api from '../services/api'
 interface CategoryModalProps {
   isOpen: boolean
   onClose: () => void
+  editingCategory?: any
 }
 
-const CategoryModal = ({ isOpen, onClose }: CategoryModalProps) => {
+const CategoryModal = ({ isOpen, onClose, editingCategory = null }: CategoryModalProps) => {
   const [nome, setNome] = useState('')
   const [tipo, setTipo] = useState<'receita' | 'despesa'>('receita')
   const queryClient = useQueryClient()
 
-  const mutation = useMutation({
+  useEffect(() => {
+    if (editingCategory) {
+      setNome(editingCategory.nome)
+      setTipo(editingCategory.tipo?.toLowerCase() || 'receita')
+    } else {
+      setNome('')
+      setTipo('receita')
+    }
+  }, [editingCategory])
+
+  const createMutation = useMutation({
     mutationFn: (newCategory: any) => api.post('/categories', newCategory),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] })
+      onClose()
+      setNome('')
+      setTipo('receita')
+    }
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) => api.put(`/categories/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] })
       onClose()
@@ -25,9 +46,16 @@ const CategoryModal = ({ isOpen, onClose }: CategoryModalProps) => {
 
   if (!isOpen) return null
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    mutation.mutate({ nome, tipo })
+    if (editingCategory) {
+      await updateMutation.mutateAsync({
+        id: editingCategory.id,
+        data: { nome, tipo }
+      })
+    } else {
+      await createMutation.mutateAsync({ nome, tipo })
+    }
   }
 
   return (
@@ -38,7 +66,7 @@ const CategoryModal = ({ isOpen, onClose }: CategoryModalProps) => {
             <div className="p-2 bg-sky-500/20 text-sky-400 rounded-lg">
               <Tag className="w-5 h-5" />
             </div>
-            <h2 className="text-xl font-bold">Nova Categoria</h2>
+            <h2 className="text-xl font-bold">{editingCategory ? 'Editar Categoria' : 'Nova Categoria'}</h2>
           </div>
           <button 
             onClick={onClose}
@@ -91,12 +119,12 @@ const CategoryModal = ({ isOpen, onClose }: CategoryModalProps) => {
 
           <button
             type="submit"
-            disabled={mutation.isPending}
+            disabled={createMutation.isPending || updateMutation.isPending}
             className="w-full btn-primary py-4 rounded-2xl font-bold text-lg shadow-xl shadow-sky-500/20 flex items-center justify-center gap-3 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {mutation.isPending ? (
+            {(createMutation.isPending || updateMutation.isPending) ? (
               <Loader2 className="w-6 h-6 animate-spin" />
-            ) : 'Criar Categoria'}
+            ) : editingCategory ? 'Salvar Categoria' : 'Criar Categoria'}
           </button>
         </form>
       </div>
