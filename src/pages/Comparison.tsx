@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { TrendingUp, TrendingDown, Loader2, DollarSign, BarChart3, Trophy } from 'lucide-react'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, ReferenceLine } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, ReferenceLine, PieChart, Pie, Cell } from 'recharts'
 import { useQuery } from '@tanstack/react-query'
 import api from '../services/api'
 
@@ -11,6 +12,8 @@ interface MonthData {
 }
 
 const Comparison = () => {
+  const [selectedMonth, setSelectedMonth] = useState<string>('')
+  
   const { data: transactions, isLoading } = useQuery({
     queryKey: ['transactions'],
     queryFn: async () => {
@@ -46,7 +49,14 @@ const Comparison = () => {
   const totalDespesas = monthlyData.reduce((sum, m) => sum + m.despesa, 0)
   const saldoGeral = totalReceitas - totalDespesas
 
-  const categoryRanking = transactions?.reduce((acc: any[], t: any) => {
+  const categoryRanking = (selectedMonth 
+    ? transactions?.filter((t: any) => {
+        const date = new Date(t.data)
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+        return monthKey === selectedMonth
+      })
+    : transactions
+  )?.reduce((acc: any[], t: any) => {
     console.log('Transaction:', t.tipo, t.categoria)
     if ((t.tipo === 'DESPESA' || t.tipo?.toLowerCase() === 'despesa') && t.categoria) {
       const existing = acc.find(item => item.categoria === t.categoria.nome)
@@ -65,6 +75,30 @@ const Comparison = () => {
   }, []).sort((a, b) => b.total - a.total).slice(0, 5) || []
   
   console.log('Category Ranking:', categoryRanking)
+
+  const availableMonths = monthlyData.map(m => m.month)
+  
+  const filteredTransactions = selectedMonth 
+    ? transactions?.filter((t: any) => {
+        const date = new Date(t.data)
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+        return monthKey === selectedMonth && (t.tipo === 'DESPESA' || t.tipo?.toLowerCase() === 'despesa')
+      })
+    : transactions?.filter((t: any) => t.tipo === 'DESPESA' || t.tipo?.toLowerCase() === 'despesa')
+
+  const pieData = filteredTransactions?.reduce((acc: any[], t: any) => {
+    if (t.categoria) {
+      const existing = acc.find(item => item.name === t.categoria.nome)
+      if (existing) {
+        existing.value += Number(t.valor)
+      } else {
+        acc.push({ name: t.categoria.nome, value: Number(t.valor) })
+      }
+    }
+    return acc
+  }, []).sort((a, b) => b.value - a.value) || []
+
+  const COLORS = ['#f43f5e', '#f97316', '#eab308', '#22c55e', '#14b8a6', '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7']
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -247,41 +281,92 @@ const Comparison = () => {
         )}
       </div>
 
-      {categoryRanking.length > 0 && (
-        <div className="premium-card">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-amber-400" />
-              Top 5 Categorias de Despesas
-            </h2>
-          </div>
-          <div className="space-y-4">
-            {categoryRanking.map((cat: any, index: number) => (
-              <div key={index} className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl border border-slate-700/30">
-                <div className="flex items-center gap-4">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                    index === 0 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50' :
-                    index === 1 ? 'bg-slate-400/20 text-slate-300 border border-slate-400/50' :
-                    index === 2 ? 'bg-orange-600/20 text-orange-500 border border-orange-600/50' :
-                    'bg-slate-700/20 text-slate-400 border border-slate-600/30'
-                  }`}>
-                    {index + 1}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {categoryRanking.length > 0 && (
+          <div className="premium-card">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-amber-400" />
+                Top 5 Categorias de Despesas
+              </h2>
+            </div>
+            <div className="space-y-4">
+              {categoryRanking.map((cat: any, index: number) => (
+                <div key={index} className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl border border-slate-700/30">
+                  <div className="flex items-center gap-4">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                      index === 0 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50' :
+                      index === 1 ? 'bg-slate-400/20 text-slate-300 border border-slate-400/50' :
+                      index === 2 ? 'bg-orange-600/20 text-orange-500 border border-orange-600/50' :
+                      'bg-slate-700/20 text-slate-400 border border-slate-600/30'
+                    }`}>
+                      {index + 1}
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-100">{cat.categoria}</p>
+                      <p className="text-xs text-slate-400">{cat.count} transação{cat.count !== 1 ? 's' : ''}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-slate-100">{cat.categoria}</p>
-                    <p className="text-xs text-slate-400">{cat.count} transação{cat.count !== 1 ? 's' : ''}</p>
+                  <div className="text-right">
+                    <p className="font-bold text-rose-400">
+                      R$ {cat.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-bold text-rose-400">
-                    R$ {cat.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </p>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {pieData.length > 0 && (
+          <div className="premium-card">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <DollarSign className="w-5 h-5 text-rose-400" />
+                Distribuição de Despesas por Categoria
+              </h2>
+              {availableMonths.length > 0 && (
+                <select 
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+                >
+                  <option value="">Todos os meses</option>
+                  {availableMonths.map((month: string) => {
+                    const [year, m] = month.split('-')
+                    const date = new Date(Number(year), Number(m) - 1)
+                    return (
+                      <option key={month} value={month}>
+                        {date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+                      </option>
+                    )
+                  })}
+                </select>
+              )}
+            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={100}
+                  paddingAngle={2}
+                  dataKey="value"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  labelLine={false}
+                >
+                  {pieData.map((entry: any, index: number) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
