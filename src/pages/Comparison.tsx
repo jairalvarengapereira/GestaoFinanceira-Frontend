@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { TrendingUp, TrendingDown, Loader2, DollarSign, BarChart3, Trophy } from 'lucide-react'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, PieChart, Pie, Cell, AreaChart, Area } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, PieChart, Pie, Cell } from 'recharts'
 import { useQuery } from '@tanstack/react-query'
 import api from '../services/api'
 
@@ -189,15 +189,15 @@ const Comparison = () => {
         </div>
         {monthlyData.length > 0 ? (
           <ResponsiveContainer width="100%" height="85%">
-            <AreaChart data={monthlyData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+            <BarChart data={monthlyData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
               <defs>
-                <linearGradient id="colorReceita" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                <linearGradient id="colorReceitaBar" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#10b981"/>
+                  <stop offset="100%" stopColor="#059669"/>
                 </linearGradient>
-                <linearGradient id="colorDespesa" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#f43f5e" stopOpacity={0}/>
+                <linearGradient id="colorDespesaBar" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#f43f5e"/>
+                  <stop offset="100%" stopColor="#e11d48"/>
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
@@ -218,25 +218,21 @@ const Comparison = () => {
                 tickFormatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`}
               />
               <Tooltip content={<CustomTooltip />} />
-              <Area 
-                type="monotone" 
+              <Bar 
                 dataKey="receita" 
                 name="Receitas" 
-                stroke="#10b981" 
-                strokeWidth={3}
-                fillOpacity={1} 
-                fill="url(#colorReceita)" 
+                fill="url(#colorReceitaBar)" 
+                radius={[8, 8, 0, 0]} 
+                maxBarSize={60}
               />
-              <Area 
-                type="monotone" 
+              <Bar 
                 dataKey="despesa" 
                 name="Despesas" 
-                stroke="#f43f5e" 
-                strokeWidth={3}
-                fillOpacity={1} 
-                fill="url(#colorDespesa)" 
+                fill="url(#colorDespesaBar)" 
+                radius={[8, 8, 0, 0]} 
+                maxBarSize={60}
               />
-            </AreaChart>
+            </BarChart>
           </ResponsiveContainer>
         ) : (
           <div className="flex flex-col items-center justify-center h-[400px]">
