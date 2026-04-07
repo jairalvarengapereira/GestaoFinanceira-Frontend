@@ -9,6 +9,8 @@
 
 Uma aplicação web moderna para gerenciamento de finanças pessoais, desenvolvida com React, TypeScript e Tailwind CSS.
 
+![Dashboard](GestaoFinanceira-Frontend/Screenshot_1.png)
+
 </div>
 
 ---
@@ -16,6 +18,31 @@ Uma aplicação web moderna para gerenciamento de finanças pessoais, desenvolvi
 ## 📋 Sobre o Projeto
 
 O **Gestão Financeira** é uma aplicação completa para controle de receitas e despesas pessoais. Com uma interface intuitiva e visual moderna, você pode acompanhar sua situação financeira, categorizar transações e visualizar relatórios gráficos do seu fluxo de caixa.
+
+---
+
+## 🖼️ Screenshots
+
+### 📊 Dashboard
+![Dashboard](GestaoFinanceira-Frontend/Screenshot_1.png)
+
+### 💰 Transações
+![Transações](GestaoFinanceira-Frontend/Screenshot_2.png)
+
+### 📈 Comparativo Mensal
+![Comparativo](GestaoFinanceira-Frontend/Screenshot_3.png)
+
+### 📁 Categorias
+![Categorias](GestaoFinanceira-Frontend/Screenshot_4.png)
+
+### 📱 Mobile - Dashboard
+![Mobile Dashboard](GestaoFinanceira-Frontend/Screenshot_5.png)
+
+### 📱 Mobile - Transações
+![Mobile Transações](GestaoFinanceira-Frontend/Screenshot_6.png)
+
+### 📱 Mobile - Comparativo
+![Mobile Comparativo](GestaoFinanceira-Frontend/Screenshot_7.png)
 
 ---
 
@@ -157,7 +184,7 @@ npm run preview
 
 A aplicação é totalmente responsiva e funciona em:
 - 📱 Mobile (< 640px)
--平板 Tablet (640px - 1024px)
+- 📱 Tablet (640px - 1024px)
 - 💻 Desktop (> 1024px)
 
 ---
