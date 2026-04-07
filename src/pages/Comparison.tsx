@@ -321,7 +321,7 @@ const Comparison = () => {
                       cx="50%"
                       cy="50%"
                       innerRadius={60}
-                      outerRadius={100}
+                      outerRadius={110}
                       paddingAngle={2}
                       dataKey="value"
                       label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
@@ -349,12 +349,12 @@ const Comparison = () => {
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              <div className="w-full grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+              <div className="w-full space-y-2">
                 {pieData.map((entry: any, index: number) => (
-                  <div key={index} className="flex items-center gap-2 text-sm bg-slate-800/50 p-2 rounded-lg">
+                  <div key={index} className="flex items-center gap-3 text-sm bg-slate-800/50 p-3 rounded-lg">
                     <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
-                    <span className="text-slate-300 truncate text-xs">{entry.name}</span>
-                    <span className="text-slate-400 ml-auto flex-shrink-0 text-xs">
+                    <span className="text-slate-300 flex-1">{entry.name}</span>
+                    <span className="text-slate-400 flex-shrink-0">
                       R$ {entry.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
