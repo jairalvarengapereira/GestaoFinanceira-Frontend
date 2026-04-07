@@ -339,13 +339,28 @@ const Comparison = () => {
                       labelLine={false}
                     >
                       {pieData.map((entry: any, index: number) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={COLORS[index % COLORS.length]} 
+                          stroke="none"
+                          style={{ outline: 'none' }}
+                        />
                       ))}
                     </Pie>
                     <Tooltip 
-                      formatter={(value, name) => [`${name}: R$ ${Number(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, '']} 
-                      contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '12px', padding: '12px' }}
-                      itemStyle={{ color: '#e2e8f0' }}
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0]
+                          return (
+                            <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-2xl">
+                              <p className="text-slate-300 font-medium">
+                                {data.name}: <span className="text-rose-400">R$ {Number(data.value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                              </p>
+                            </div>
+                          )
+                        }
+                        return null
+                      }}
                     />
                   </PieChart>
                 </ResponsiveContainer>
