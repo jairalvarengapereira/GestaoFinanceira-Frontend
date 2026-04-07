@@ -312,16 +312,16 @@ const Comparison = () => {
                 Distribuição de Despesas
               </h2>
             </div>
-            <div className="flex flex-col lg:flex-row items-center gap-6">
-              <div className="w-full h-[250px] sm:h-[300px]">
+            <div className="flex flex-col items-center gap-6">
+              <div className="w-full h-[250px] md:h-[350px] lg:h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={pieData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={40}
-                      outerRadius={80}
+                      innerRadius={50}
+                      outerRadius={120}
                       paddingAngle={2}
                       dataKey="value"
                       label={({ percent }) => `${((percent || 0) * 100).toFixed(0)}%`}
@@ -335,12 +335,12 @@ const Comparison = () => {
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              <div className="w-full lg:w-auto space-y-2 max-h-[200px] overflow-y-auto">
+              <div className="w-full grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                 {pieData.map((entry: any, index: number) => (
-                  <div key={index} className="flex items-center gap-2 text-sm">
+                  <div key={index} className="flex items-center gap-2 text-sm bg-slate-800/50 p-2 rounded-lg">
                     <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
-                    <span className="text-slate-300 truncate">{entry.name}</span>
-                    <span className="text-slate-500 ml-auto flex-shrink-0">
+                    <span className="text-slate-300 truncate text-xs">{entry.name}</span>
+                    <span className="text-slate-400 ml-auto flex-shrink-0 text-xs">
                       R$ {entry.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
