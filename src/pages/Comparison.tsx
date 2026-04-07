@@ -59,6 +59,11 @@ const Comparison = () => {
     return new Date(Number(year), Number(m) - 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
   }
 
+  const availableMonths = monthlyData.filter(m => m.receita > 0 || m.despesa > 0).map(m => m.month)
+  
+  const showPrevious = availableMonths.includes(previousMonthKey)
+  const showCurrent = availableMonths.includes(currentMonthKey)
+
   const selectedMonthData = monthlyData.find(m => m.month === selectedMonth)
   const selectedMonthReceitas = selectedMonthData?.receita || 0
   const selectedMonthDespesas = selectedMonthData?.despesa || 0
@@ -153,8 +158,15 @@ const Comparison = () => {
               className="bg-slate-900/50 border border-slate-700/50 rounded-xl px-4 py-3 text-lg font-bold text-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
             >
               <option value="">Todos os meses</option>
-              <option value={currentMonthKey}>{getMonthLabel(currentMonthKey)} (Atual)</option>
-              <option value={previousMonthKey}>{getMonthLabel(previousMonthKey)} (Anterior)</option>
+              {showCurrent && (
+                <option value={currentMonthKey}>{getMonthLabel(currentMonthKey)} (Atual)</option>
+              )}
+              {showPrevious && (
+                <option value={previousMonthKey}>{getMonthLabel(previousMonthKey)} (Anterior)</option>
+              )}
+              {availableMonths.filter(m => m !== currentMonthKey && m !== previousMonthKey).map(month => (
+                <option key={month} value={month}>{getMonthLabel(month)}</option>
+              ))}
             </select>
           </div>
           <div className="grid grid-cols-3 gap-4 flex-1 md:ml-8">
