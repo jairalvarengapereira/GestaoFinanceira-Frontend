@@ -330,7 +330,7 @@ const Comparison = () => {
                         const x = cx + radius * Math.cos(-midAngle * RADIAN)
                         const y = cy + radius * Math.sin(-midAngle * RADIAN)
                         return (
-                          <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" className="text-[10px] md:text-xs font-bold" style={{ textShadow: '0px 1px 2px rgba(0,0,0,0.5)' }}>
+                          <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" className="text-xs md:text-sm font-bold" style={{ textShadow: '0px 1px 2px rgba(0,0,0,0.5)' }}>
                             {`${((percent || 0) * 100).toFixed(0)}%`}
                           </text>
                         )
