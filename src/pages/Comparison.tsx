@@ -324,7 +324,7 @@ const Comparison = () => {
                       outerRadius={120}
                       paddingAngle={2}
                       dataKey="value"
-                      label={({ percent }) => `${((percent || 0) * 100).toFixed(0)}%`}
+                      label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
                       labelLine={false}
                     >
                       {pieData.map((entry: any, index: number) => (
