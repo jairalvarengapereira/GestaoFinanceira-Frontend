@@ -324,14 +324,18 @@ const Comparison = () => {
                       outerRadius={120}
                       paddingAngle={2}
                       dataKey="value"
-                      label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
+                      label={({ percent }) => `${((percent || 0) * 100).toFixed(0)}%`}
                       labelLine={false}
                     >
                       {pieData.map((entry: any, index: number) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value) => `R$ ${Number(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} />
+                    <Tooltip 
+                      formatter={(value, name) => [`${name}: R$ ${Number(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, '']} 
+                      contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '12px', padding: '12px' }}
+                      itemStyle={{ color: '#e2e8f0' }}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
