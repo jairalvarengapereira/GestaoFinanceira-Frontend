@@ -24,9 +24,7 @@ const Sidebar = ({ onLogout, isOpen, onClose }: SidebarProps) => {
     `}>
       <div className="flex items-center justify-between mb-10 px-2">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-sky-500 rounded-lg shadow-lg shadow-sky-500/20">
-            <Wallet className="text-white w-6 h-6" />
-          </div>
+          <img src="/Logo.png" alt="Logo" className="w-10 h-10 rounded-lg" />
           <h1 className="text-xl font-bold text-white lg:block hidden">
             Gestão Financeira
           </h1>

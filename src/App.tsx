@@ -55,7 +55,7 @@ function App() {
               >
                 <Menu className="w-6 h-6" />
               </button>
-              <span className="font-bold text-sky-400">Gestão Financeira</span>
+              <img src="/Logo.png" alt="Logo" className="h-8 w-8" />
               <div className="w-10" /> {/* Spacer */}
             </header>
 
