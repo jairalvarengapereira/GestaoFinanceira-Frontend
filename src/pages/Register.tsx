@@ -30,7 +30,7 @@ const Register = () => {
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-md space-y-8 animate-slide-up">
         <div className="flex flex-col items-center gap-4">
-          <img src="/Logo.png" alt="Logo" className="w-16 h-16 rounded-xl" />
+          <img src="/Logo.png?v=3" alt="Logo" className="w-16 h-16 rounded-xl" />
           <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
             Crie sua conta
           </h1>
