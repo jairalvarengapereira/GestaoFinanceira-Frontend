@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Wallet, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react'
+import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react'
 import api from '../services/api'
 
 const Login = ({ onLogin }: { onLogin: () => void }) => {
@@ -33,9 +33,7 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-md space-y-8 animate-slide-up">
         <div className="flex flex-col items-center gap-4">
-          <div className="p-4 bg-sky-500 rounded-2xl shadow-2xl shadow-sky-500/20">
-            <Wallet className="text-white w-10 h-10" />
-          </div>
+          <img src="/Logo.png" alt="Logo" className="w-16 h-16 rounded-xl" />
           <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
             Gestão Financeira
           </h1>
