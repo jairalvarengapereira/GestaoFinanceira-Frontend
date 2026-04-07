@@ -313,18 +313,28 @@ const Comparison = () => {
               </h2>
             </div>
             <div className="flex flex-col items-center gap-6">
-              <div className="w-full h-[250px] md:h-[350px] lg:h-[400px]">
+              <div className="w-full h-[250px] md:h-[300px] lg:h-[350px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={pieData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={50}
-                      outerRadius={120}
+                      innerRadius={60}
+                      outerRadius={100}
                       paddingAngle={2}
                       dataKey="value"
-                      label={({ percent }) => `${((percent || 0) * 100).toFixed(0)}%`}
+                      label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+                        const RADIAN = Math.PI / 180
+                        const radius = innerRadius + (outerRadius - innerRadius) * 0.5
+                        const x = cx + radius * Math.cos(-midAngle * RADIAN)
+                        const y = cy + radius * Math.sin(-midAngle * RADIAN)
+                        return (
+                          <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" className="text-[10px] md:text-xs font-bold" style={{ textShadow: '0px 1px 2px rgba(0,0,0,0.5)' }}>
+                            {`${((percent || 0) * 100).toFixed(0)}%`}
+                          </text>
+                        )
+                      }}
                       labelLine={false}
                     >
                       {pieData.map((entry: any, index: number) => (
