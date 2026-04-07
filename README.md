@@ -2,6 +2,8 @@
 
 <div align="center">
 
+<img src="src/assets/Logo.png" alt="Logo" width="100" />
+
 ![React](https://img.shields.io/badge/React-19.2.4-61DAFB?style=for-the-badge&logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9.3-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.2.2-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
@@ -9,7 +11,7 @@
 
 Uma aplicação web moderna para gerenciamento de finanças pessoais, desenvolvida com React, TypeScript e Tailwind CSS.
 
-![Dashboard](GestaoFinanceira-Frontend/Screenshot_1.png)
+![Dashboard](src/assets/Screenshot_1.png)
 
 </div>
 
@@ -23,26 +25,29 @@ O **Gestão Financeira** é uma aplicação completa para controle de receitas e
 
 ## 🖼️ Screenshots
 
+### 🔐 Login
+![Login](src/assets/Screenshot_8.png)
+
 ### 📊 Dashboard
-![Dashboard](GestaoFinanceira-Frontend/Screenshot_1.png)
+![Dashboard](src/assets/Screenshot_1.png)
 
 ### 💰 Transações
-![Transações](GestaoFinanceira-Frontend/Screenshot_2.png)
+![Transações](src/assets/Screenshot_2.png)
 
 ### 📈 Comparativo Mensal
-![Comparativo](GestaoFinanceira-Frontend/Screenshot_3.png)
+![Comparativo](src/assets/Screenshot_3.png)
 
 ### 📁 Categorias
-![Categorias](GestaoFinanceira-Frontend/Screenshot_4.png)
+![Categorias](src/assets/Screenshot_4.png)
 
 ### 📱 Mobile - Dashboard
-![Mobile Dashboard](GestaoFinanceira-Frontend/Screenshot_5.png)
+![Mobile Dashboard](src/assets/Screenshot_5.png)
 
 ### 📱 Mobile - Transações
-![Mobile Transações](GestaoFinanceira-Frontend/Screenshot_6.png)
+![Mobile Transações](src/assets/Screenshot_6.png)
 
 ### 📱 Mobile - Comparativo
-![Mobile Comparativo](GestaoFinanceira-Frontend/Screenshot_7.png)
+![Mobile Comparativo](src/assets/Screenshot_7.png)
 
 ---
 
@@ -52,6 +57,7 @@ O **Gestão Financeira** é uma aplicação completa para controle de receitas e
 - Login e registro de usuários
 - Tokens JWT para autenticação segura
 - Persistência de sessão
+- Interface personalizada com logo
 
 ### 💰 Transações
 - Criação, edição e exclusão de transações
@@ -100,20 +106,23 @@ O **Gestão Financeira** é uma aplicação completa para controle de receitas e
 
 ```
 src/
-├── components/          # Componentes reutilizáveis
+├── assets/                # Imagens e recursos estáticos
+│   ├── Logo.png          # Logo da aplicação
+│   └── Screenshot_*.png  # Screenshots para documentação
+├── components/           # Componentes reutilizáveis
 │   ├── CategoryModal.tsx
 │   ├── Sidebar.tsx
 │   └── TransactionModal.tsx
-├── pages/              # Páginas da aplicação
+├── pages/               # Páginas da aplicação
 │   ├── Categories.tsx
 │   ├── Comparison.tsx
 │   ├── Dashboard.tsx
 │   ├── Login.tsx
 │   ├── Register.tsx
 │   └── Transactions.tsx
-├── services/           # Serviços e API
+├── services/            # Serviços e API
 │   └── api.ts
-├── App.tsx             # Componente principal
+├── App.tsx              # Componente principal
 ├── main.tsx            # Entry point
 └── index.css           # Estilos globais
 ```

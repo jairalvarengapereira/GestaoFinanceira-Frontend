@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Receipt, Tag, LogOut, Wallet, X, BarChart3 } from 'lucide-react'
+import { LayoutDashboard, Receipt, Tag, LogOut, X, BarChart3 } from 'lucide-react'
 
 interface SidebarProps {
   onLogout: () => void
