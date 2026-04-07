@@ -10,7 +10,10 @@ const Transactions = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<any>(null)
   const [tipoTransacao, setTipoTransacao] = useState<'receita' | 'despesa'>('despesa')
+  const [searchTerm, setSearchTerm] = useState('')
   const queryClient = useQueryClient()
+  
+  const [selectedMonth, setSelectedMonth] = useState<string>('')
 
   useEffect(() => {
     const token = localStorage.getItem('@SaaS:token')
@@ -26,6 +29,35 @@ const Transactions = () => {
       return response.data
     }
   })
+
+  const monthlyData = transactions?.reduce((acc: Record<string, any>, t: any) => {
+    const date = new Date(t.data)
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+    if (!acc[monthKey]) acc[monthKey] = true
+    return acc
+  }, {})
+
+  const availableMonths = Object.keys(monthlyData || {}).sort().reverse()
+
+  const getMonthLabel = (monthKey: string) => {
+    const [year, m] = monthKey.split('-')
+    return new Date(Number(year), Number(m) - 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+  }
+
+  const filteredTransactions = selectedMonth
+    ? transactions?.filter((t: any) => {
+        const date = new Date(t.data)
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+        return monthKey === selectedMonth
+      })
+    : transactions
+
+  const searchedTransactions = searchTerm
+    ? filteredTransactions?.filter((t: any) => 
+        t.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        t.categoria?.nome?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : filteredTransactions
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
@@ -62,9 +94,21 @@ const Transactions = () => {
             <input 
               type="text" 
               placeholder="Buscar transação..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full bg-slate-900/50 border border-slate-700/50 rounded-xl py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-sky-500/50 transition-all"
             />
           </div>
+          <select 
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="bg-slate-900/50 border border-slate-700/50 rounded-xl px-4 py-2 text-sm text-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+          >
+            <option value="">Todos os meses</option>
+            {availableMonths.map(month => (
+              <option key={month} value={month}>{getMonthLabel(month)}</option>
+            ))}
+          </select>
         </div>
 
         {isLoading ? (
@@ -85,7 +129,7 @@ const Transactions = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-700/30">
-                {transactions?.map((t: any) => (
+                {searchedTransactions?.map((t: any) => (
                   <tr key={t.id} className="group hover:bg-slate-700/10 transition-all">
                     <td className="py-4 font-medium">{t.descricao}</td>
                     <td className="py-4">
