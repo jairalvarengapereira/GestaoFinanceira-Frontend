@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { TrendingUp, TrendingDown, Loader2, DollarSign, BarChart3, Trophy } from 'lucide-react'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, PieChart, Pie, Cell } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, PieChart, Pie, Cell, AreaChart, Area } from 'recharts'
 import { useQuery } from '@tanstack/react-query'
 import api from '../services/api'
 
@@ -112,14 +112,15 @@ const Comparison = () => {
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
+      const receita = payload.find((p: any) => p.dataKey === 'receita')?.value || 0
+      const despesa = payload.find((p: any) => p.dataKey === 'despesa')?.value || 0
+      const saldo = receita - despesa
       return (
         <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-2xl">
           <p className="text-slate-300 font-medium mb-2">{label}</p>
-          {payload.map((entry: any, index: number) => (
-            <p key={index} className="text-sm" style={{ color: entry.color }}>
-              {entry.name}: R$ {entry.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </p>
-          ))}
+          <p className="text-sm text-emerald-400">Receitas: R$ {receita.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+          <p className="text-sm text-rose-400">Despesas: R$ {despesa.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+          <p className={`text-sm font-bold mt-1 ${saldo >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>Saldo: R$ {saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
         </div>
       )
     }
@@ -188,7 +189,17 @@ const Comparison = () => {
         </div>
         {monthlyData.length > 0 ? (
           <ResponsiveContainer width="100%" height="85%">
-            <BarChart data={monthlyData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+            <AreaChart data={monthlyData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+              <defs>
+                <linearGradient id="colorReceita" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                </linearGradient>
+                <linearGradient id="colorDespesa" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#f43f5e" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
               <XAxis 
                 dataKey="month" 
@@ -207,22 +218,25 @@ const Comparison = () => {
                 tickFormatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`}
               />
               <Tooltip content={<CustomTooltip />} />
-              <ReferenceLine y={0} stroke="#334155" />
-              <Bar 
+              <Area 
+                type="monotone" 
                 dataKey="receita" 
                 name="Receitas" 
-                fill="#10b981" 
-                radius={[4, 4, 0, 0]} 
-                maxBarSize={50}
+                stroke="#10b981" 
+                strokeWidth={3}
+                fillOpacity={1} 
+                fill="url(#colorReceita)" 
               />
-              <Bar 
+              <Area 
+                type="monotone" 
                 dataKey="despesa" 
                 name="Despesas" 
-                fill="#f43f5e" 
-                radius={[4, 4, 0, 0]} 
-                maxBarSize={50}
+                stroke="#f43f5e" 
+                strokeWidth={3}
+                fillOpacity={1} 
+                fill="url(#colorDespesa)" 
               />
-            </BarChart>
+            </AreaChart>
           </ResponsiveContainer>
         ) : (
           <div className="flex flex-col items-center justify-center h-[400px]">
