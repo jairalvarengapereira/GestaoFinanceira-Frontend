@@ -74,8 +74,12 @@ const Comparison = () => {
   const showCurrent = availableMonths.includes(currentMonthKey)
 
   const selectedMonthData = monthlyData.find(m => m.month === selectedMonth)
-  const selectedMonthReceitas = selectedMonthData?.receita || 0
-  const selectedMonthDespesas = selectedMonthData?.despesa || 0
+  const selectedMonthReceitas = selectedMonth 
+    ? (selectedMonthData?.receita || 0)
+    : totalReceitas
+  const selectedMonthDespesas = selectedMonth 
+    ? (selectedMonthData?.despesa || 0)
+    : totalDespesas
   const selectedMonthSaldo = selectedMonthReceitas - selectedMonthDespesas
 
   const categoryRanking = (selectedMonth 
