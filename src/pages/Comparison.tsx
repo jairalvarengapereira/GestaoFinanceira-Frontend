@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { TrendingUp, TrendingDown, Loader2, DollarSign, BarChart3, Trophy } from 'lucide-react'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, ReferenceLine, PieChart, Pie, Cell } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, PieChart, Pie, Cell } from 'recharts'
 import { useQuery } from '@tanstack/react-query'
 import api from '../services/api'
 
@@ -12,7 +12,12 @@ interface MonthData {
 }
 
 const Comparison = () => {
-  const [selectedMonth, setSelectedMonth] = useState<string>('')
+  const currentDate = new Date()
+  const currentMonthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`
+  const previousMonthDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1)
+  const previousMonthKey = `${previousMonthDate.getFullYear()}-${String(previousMonthDate.getMonth() + 1).padStart(2, '0')}`
+  
+  const [selectedMonth, setSelectedMonth] = useState<string>(currentMonthKey)
   
   const { data: transactions, isLoading } = useQuery({
     queryKey: ['transactions'],
@@ -48,6 +53,16 @@ const Comparison = () => {
   const totalReceitas = monthlyData.reduce((sum, m) => sum + m.receita, 0)
   const totalDespesas = monthlyData.reduce((sum, m) => sum + m.despesa, 0)
   const saldoGeral = totalReceitas - totalDespesas
+
+  const getMonthLabel = (monthKey: string) => {
+    const [year, m] = monthKey.split('-')
+    return new Date(Number(year), Number(m) - 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+  }
+
+  const selectedMonthData = monthlyData.find(m => m.month === selectedMonth)
+  const selectedMonthReceitas = selectedMonthData?.receita || 0
+  const selectedMonthDespesas = selectedMonthData?.despesa || 0
+  const selectedMonthSaldo = selectedMonthReceitas - selectedMonthDespesas
 
   const categoryRanking = (selectedMonth 
     ? transactions?.filter((t: any) => {
@@ -132,49 +147,39 @@ const Comparison = () => {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="premium-card flex flex-col gap-4 border-l-4 overflow-hidden relative group border-sky-500/20">
-          <div className="absolute top-0 right-0 w-32 h-32 -mr-16 -mt-16 rounded-full opacity-5 blur-3xl transition-all group-hover:opacity-10 bg-sky-500" />
-          <div className="flex items-center justify-between relative z-10">
-            <div className="p-2 rounded-lg bg-sky-500/10 text-sky-400 border border-sky-500/20">
-              <DollarSign className="w-5 h-5" />
+      <div className="premium-card p-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <p className="text-slate-400 text-xs font-medium uppercase tracking-wider mb-1">Período</p>
+            <select 
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="bg-slate-900/50 border border-slate-700/50 rounded-xl px-4 py-3 text-lg font-bold text-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+            >
+              <option value="">Todos os meses</option>
+              <option value={currentMonthKey}>{getMonthLabel(currentMonthKey)} (Atual)</option>
+              <option value={previousMonthKey}>{getMonthLabel(previousMonthKey)} (Anterior)</option>
+            </select>
+          </div>
+          <div className="grid grid-cols-3 gap-4 flex-1 md:ml-8">
+            <div className="text-center p-3 bg-slate-800/50 rounded-xl">
+              <p className="text-slate-400 text-xs uppercase">Receitas</p>
+              <p className="text-xl font-bold text-emerald-400">
+                R$ {selectedMonthReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
             </div>
-          </div>
-          <div className="relative z-10">
-            <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Saldo Total</p>
-            <p className={`text-2xl font-bold mt-1 ${saldoGeral >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-              R$ {saldoGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </p>
-          </div>
-        </div>
-
-        <div className="premium-card flex flex-col gap-4 border-l-4 overflow-hidden relative group border-emerald-500/20">
-          <div className="absolute top-0 right-0 w-32 h-32 -mr-16 -mt-16 rounded-full opacity-5 blur-3xl transition-all group-hover:opacity-10 bg-emerald-500" />
-          <div className="flex items-center justify-between relative z-10">
-            <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              <TrendingUp className="w-5 h-5" />
+            <div className="text-center p-3 bg-slate-800/50 rounded-xl">
+              <p className="text-slate-400 text-xs uppercase">Despesas</p>
+              <p className="text-xl font-bold text-rose-400">
+                R$ {selectedMonthDespesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
             </div>
-          </div>
-          <div className="relative z-10">
-            <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Total Receitas</p>
-            <p className="text-2xl font-bold mt-1 text-emerald-400">
-              R$ {totalReceitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </p>
-          </div>
-        </div>
-
-        <div className="premium-card flex flex-col gap-4 border-l-4 overflow-hidden relative group border-rose-500/20">
-          <div className="absolute top-0 right-0 w-32 h-32 -mr-16 -mt-16 rounded-full opacity-5 blur-3xl transition-all group-hover:opacity-10 bg-rose-500" />
-          <div className="flex items-center justify-between relative z-10">
-            <div className="p-2 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20">
-              <TrendingDown className="w-5 h-5" />
+            <div className="text-center p-3 bg-slate-800/50 rounded-xl">
+              <p className="text-slate-400 text-xs uppercase">Saldo</p>
+              <p className={`text-xl font-bold ${selectedMonthSaldo >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                R$ {selectedMonthSaldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
             </div>
-          </div>
-          <div className="relative z-10">
-            <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Total Despesas</p>
-            <p className="text-2xl font-bold mt-1 text-rose-400">
-              R$ {totalDespesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </p>
           </div>
         </div>
       </div>
@@ -236,51 +241,6 @@ const Comparison = () => {
         )}
       </div>
 
-      <div className="premium-card h-[400px]">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <DollarSign className="w-5 h-5 text-sky-400" />
-            Diferença Mensal (Saldo)
-          </h2>
-        </div>
-        {monthlyData.length > 0 ? (
-          <ResponsiveContainer width="100%" height="85%">
-            <BarChart data={monthlyData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-              <XAxis 
-                dataKey="month" 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{fill: '#94a3b8', fontSize: 12}}
-                tickFormatter={(value) => {
-                  const [year, month] = value.split('-')
-                  return new Date(Number(year), Number(month) - 1).toLocaleDateString('pt-BR', { month: 'short' })
-                }}
-              />
-              <YAxis 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{fill: '#94a3b8', fontSize: 12}}
-                tickFormatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <ReferenceLine y={0} stroke="#334155" />
-<Bar 
-                dataKey="diferenca" 
-                name="Diferença" 
-                radius={[4, 4, 0, 0]} 
-                maxBarSize={80}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        ) : (
-          <div className="flex flex-col items-center justify-center h-[300px]">
-            <DollarSign className="w-16 h-16 text-slate-700 mb-4" />
-            <p className="text-slate-500">Nenhum dado encontrado.</p>
-          </div>
-        )}
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {categoryRanking.length > 0 && (
           <div className="premium-card">
@@ -325,24 +285,6 @@ const Comparison = () => {
                 <DollarSign className="w-5 h-5 text-rose-400" />
                 Distribuição de Despesas por Categoria
               </h2>
-              {availableMonths.length > 0 && (
-                <select 
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(e.target.value)}
-                  className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
-                >
-                  <option value="">Todos os meses</option>
-                  {availableMonths.map((month: string) => {
-                    const [year, m] = month.split('-')
-                    const date = new Date(Number(year), Number(m) - 1)
-                    return (
-                      <option key={month} value={month}>
-                        {date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
-                      </option>
-                    )
-                  })}
-                </select>
-              )}
             </div>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
