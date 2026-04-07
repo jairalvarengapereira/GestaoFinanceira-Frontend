@@ -12,21 +12,24 @@ const StatCard = ({ title, value, type, icon: Icon }: any) => {
   return (
     <div className="premium-card flex flex-col gap-4 border-l-4 overflow-hidden relative group">
       <div className={`absolute top-0 right-0 w-32 h-32 -mr-16 -mt-16 rounded-full opacity-5 blur-3xl transition-all group-hover:opacity-10 ${
-        isBalance ? 'bg-sky-500' : isRevenue ? 'bg-emerald-500' : 'bg-rose-500'
+        isBalance 
+          ? (value >= 0 ? 'bg-sky-500' : 'bg-rose-500')
+          : isRevenue ? 'bg-emerald-500' : 'bg-rose-500'
       }`} />
       
       <div className="flex items-center justify-between relative z-10">
         <div className={`p-2 rounded-lg ${
-          isBalance ? 'bg-sky-500/10 text-sky-400 border-sky-500/20' :
-          isRevenue ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
-          'bg-rose-500/10 text-rose-400 border-rose-500/20'
+          isBalance 
+            ? (value >= 0 ? 'bg-sky-500/10 text-sky-400 border-sky-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20')
+            : isRevenue ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
+            'bg-rose-500/10 text-rose-400 border-rose-500/20'
         } border`}>
           <Icon className="w-5 h-5" />
         </div>
       </div>
       <div className="relative z-10">
         <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">{title}</p>
-        <p className="text-2xl font-bold mt-1">
+        <p className={`text-2xl font-bold mt-1 ${isBalance ? (value >= 0 ? 'text-sky-400' : 'text-rose-400') : ''}`}>
           R$ {value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
         </p>
       </div>
