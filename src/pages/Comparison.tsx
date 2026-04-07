@@ -88,6 +88,28 @@ const Comparison = () => {
     return acc
   }, []).sort((a, b) => b.total - a.total).slice(0, 5) || []
 
+  const filteredTransactions = selectedMonth 
+    ? transactions?.filter((t: any) => {
+        const date = new Date(t.data)
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+        return monthKey === selectedMonth && (t.tipo === 'DESPESA' || t.tipo?.toLowerCase() === 'despesa')
+      })
+    : transactions?.filter((t: any) => t.tipo === 'DESPESA' || t.tipo?.toLowerCase() === 'despesa')
+
+  const pieData = filteredTransactions?.reduce((acc: any[], t: any) => {
+    if (t.categoria) {
+      const existing = acc.find(item => item.name === t.categoria.nome)
+      if (existing) {
+        existing.value += Number(t.valor)
+      } else {
+        acc.push({ name: t.categoria.nome, value: Number(t.valor) })
+      }
+    }
+    return acc
+  }, []).sort((a, b) => b.value - a.value) || []
+
+  const COLORS = ['#f43f5e', '#f97316', '#eab308', '#22c55e', '#14b8a6', '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7']
+
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
