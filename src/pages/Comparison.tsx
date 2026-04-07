@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { TrendingUp, TrendingDown, Loader2, DollarSign, BarChart3, Trophy } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, PieChart, Pie, Cell } from 'recharts'
 import { useQuery } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
 
 interface MonthData {
@@ -12,12 +13,20 @@ interface MonthData {
 }
 
 const Comparison = () => {
+  const navigate = useNavigate()
   const currentDate = new Date()
   const currentMonthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`
   const previousMonthDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1)
   const previousMonthKey = `${previousMonthDate.getFullYear()}-${String(previousMonthDate.getMonth() + 1).padStart(2, '0')}`
   
   const [selectedMonth, setSelectedMonth] = useState<string>(currentMonthKey)
+
+  useEffect(() => {
+    const token = localStorage.getItem('@SaaS:token')
+    if (!token) {
+      navigate('/login')
+    }
+  }, [navigate])
   
   const { data: transactions, isLoading } = useQuery({
     queryKey: ['transactions'],
@@ -293,32 +302,47 @@ const Comparison = () => {
 
         {pieData.length > 0 && (
           <div className="premium-card">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
               <h2 className="text-xl font-bold flex items-center gap-2">
                 <DollarSign className="w-5 h-5 text-rose-400" />
-                Distribuição de Despesas por Categoria
+                Distribuição de Despesas
               </h2>
             </div>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
-                  paddingAngle={2}
-                  dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  labelLine={false}
-                >
-                  {pieData.map((entry: any, index: number) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} />
-              </PieChart>
-            </ResponsiveContainer>
+            <div className="flex flex-col lg:flex-row items-center gap-6">
+              <div className="w-full h-[250px] sm:h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={40}
+                      outerRadius={80}
+                      paddingAngle={2}
+                      dataKey="value"
+                      label={({ percent }) => `${((percent || 0) * 100).toFixed(0)}%`}
+                      labelLine={false}
+                    >
+                      {pieData.map((entry: any, index: number) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => `R$ ${Number(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="w-full lg:w-auto space-y-2 max-h-[200px] overflow-y-auto">
+                {pieData.map((entry: any, index: number) => (
+                  <div key={index} className="flex items-center gap-2 text-sm">
+                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                    <span className="text-slate-300 truncate">{entry.name}</span>
+                    <span className="text-slate-500 ml-auto flex-shrink-0">
+                      R$ {entry.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
       </div>

@@ -1,14 +1,23 @@
 import { Plus, Search, Loader2, Trash2, Pencil } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
 import TransactionModal from '../components/TransactionModal'
 
 const Transactions = () => {
+  const navigate = useNavigate()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<any>(null)
   const [tipoTransacao, setTipoTransacao] = useState<'receita' | 'despesa'>('despesa')
   const queryClient = useQueryClient()
+
+  useEffect(() => {
+    const token = localStorage.getItem('@SaaS:token')
+    if (!token) {
+      navigate('/login')
+    }
+  }, [navigate])
   
   const { data: transactions, isLoading } = useQuery({
     queryKey: ['transactions'],

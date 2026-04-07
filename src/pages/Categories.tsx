@@ -1,13 +1,22 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus, Tag, ArrowUpCircle, ArrowDownCircle, Loader2, Pencil, Trash2 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
 import CategoryModal from '../components/CategoryModal'
 
 const Categories = () => {
+  const navigate = useNavigate()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<any>(null)
   const queryClient = useQueryClient()
+
+  useEffect(() => {
+    const token = localStorage.getItem('@SaaS:token')
+    if (!token) {
+      navigate('/login')
+    }
+  }, [navigate])
   
   const { data: categories, isLoading } = useQuery({
     queryKey: ['categories'],

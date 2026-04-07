@@ -1,6 +1,8 @@
 import { TrendingUp, TrendingDown, DollarSign, Loader2, ArrowUpRight, ArrowDownRight } from 'lucide-react'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { useQuery } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
+import { useEffect } from 'react'
 import api from '../services/api'
 
 const StatCard = ({ title, value, type, icon: Icon }: any) => {
@@ -53,6 +55,14 @@ const TransactionItem = ({ t }: any) => {
 }
 
 const Dashboard = () => {
+  const navigate = useNavigate()
+  
+  useEffect(() => {
+    const token = localStorage.getItem('@SaaS:token')
+    if (!token) {
+      navigate('/login')
+    }
+  }, [navigate])
   const { data: transactions, isLoading } = useQuery({
     queryKey: ['transactions'],
     queryFn: async () => {
