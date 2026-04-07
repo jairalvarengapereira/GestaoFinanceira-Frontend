@@ -29,7 +29,7 @@ O **Gestão Financeira** é uma aplicação completa para controle de receitas e
 ![Dashboard](src/assets/Screenshot_1.png)
 
 ### 📊 Dashboard
-![Transações](src/assets/Screenshot_2.png)
+![Transações](src/assets/Screenshot_2.png)  
 ![Comparativo](src/assets/Screenshot_3.png)
 
 ### 💰 Transações
