@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown, Loader2, DollarSign, BarChart3 } from 'lucide-react'
+import { TrendingUp, TrendingDown, Loader2, DollarSign, BarChart3, Trophy } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, ReferenceLine } from 'recharts'
 import { useQuery } from '@tanstack/react-query'
 import api from '../services/api'
@@ -45,6 +45,26 @@ const Comparison = () => {
   const totalReceitas = monthlyData.reduce((sum, m) => sum + m.receita, 0)
   const totalDespesas = monthlyData.reduce((sum, m) => sum + m.despesa, 0)
   const saldoGeral = totalReceitas - totalDespesas
+
+  const categoryRanking = transactions?.reduce((acc: any[], t: any) => {
+    console.log('Transaction:', t.tipo, t.categoria)
+    if ((t.tipo === 'DESPESA' || t.tipo?.toLowerCase() === 'despesa') && t.categoria) {
+      const existing = acc.find(item => item.categoria === t.categoria.nome)
+      if (existing) {
+        existing.total += Number(t.valor)
+        existing.count += 1
+      } else {
+        acc.push({
+          categoria: t.categoria.nome,
+          total: Number(t.valor),
+          count: 1
+        })
+      }
+    }
+    return acc
+  }, []).sort((a, b) => b.total - a.total).slice(0, 5) || []
+  
+  console.log('Category Ranking:', categoryRanking)
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -226,6 +246,42 @@ const Comparison = () => {
           </div>
         )}
       </div>
+
+      {categoryRanking.length > 0 && (
+        <div className="premium-card">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold flex items-center gap-2">
+              <Trophy className="w-5 h-5 text-amber-400" />
+              Top 5 Categorias de Despesas
+            </h2>
+          </div>
+          <div className="space-y-4">
+            {categoryRanking.map((cat: any, index: number) => (
+              <div key={index} className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl border border-slate-700/30">
+                <div className="flex items-center gap-4">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                    index === 0 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50' :
+                    index === 1 ? 'bg-slate-400/20 text-slate-300 border border-slate-400/50' :
+                    index === 2 ? 'bg-orange-600/20 text-orange-500 border border-orange-600/50' :
+                    'bg-slate-700/20 text-slate-400 border border-slate-600/30'
+                  }`}>
+                    {index + 1}
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-100">{cat.categoria}</p>
+                    <p className="text-xs text-slate-400">{cat.count} transação{cat.count !== 1 ? 's' : ''}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-rose-400">
+                    R$ {cat.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
