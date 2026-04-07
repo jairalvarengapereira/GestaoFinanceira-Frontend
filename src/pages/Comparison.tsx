@@ -324,6 +324,7 @@ const Comparison = () => {
                       outerRadius={110}
                       paddingAngle={2}
                       dataKey="value"
+                      stroke="none"
                       label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
                         const RADIAN = Math.PI / 180
                         const radius = innerRadius + (outerRadius - innerRadius) * 0.5
