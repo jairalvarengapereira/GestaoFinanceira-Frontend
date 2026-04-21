@@ -8,7 +8,7 @@ interface TransactionResult {
   tipo: 'receita' | 'despesa'
   data: string
   descricao: string
-  categoriaId?: number
+  categoriaNome?: string
 }
 
 const VoiceTransaction = () => {
@@ -116,24 +116,25 @@ const VoiceTransaction = () => {
     const palavras = lower.replace(/despesa|receita|gastei|paguei|recebi|ganho|salário|salario|um|uma|dois|duas|três|\d+/g, ' ')
     const partes = palavras.replace(/[^a-záàâãéèêíìîóòôõúùûç\s]/g, ' ').replace(/\s+/g, ' ').trim().split(' ').filter(p => p.length > 2)
     
+    let categoriaNome = ''
+    
     if (partes.length > 0) {
       const ultima = partes[partes.length - 1]
       for (const [catNome, keywords] of Object.entries(CATEGORIAS_KEYWORDS)) {
         if (keywords.some(k => ultima.includes(k) || k.includes(ultima))) {
-          const cat = categorias.find(c => c.nome.toLowerCase() === catNome.toLowerCase())
-          if (cat) {
-            categoriaId = cat.id
-            desc = partes.length > 1 ? partes.slice(0, -1).join(' ') : desc
-            break
-          }
+          categoriaNome = catNome
+          desc = partes.length > 1 ? partes.slice(0, -1).join(' ') : (desc || catNome)
+          break
         }
       }
-      if (!categoriaId) desc = partes.join(' ')
+      if (!categoriaNome) {
+        desc = partes.join(' ')
+      }
     }
     
     if (valor > 0) {
       const data = new Date().toISOString().split('T')[0]
-      setResultado({ valor, tipo, data, descricao: desc, categoriaId })
+      setResultado({ valor, tipo, data, descricao: desc, categoriaNome })
       setMensagem('')
     } else {
       setMensagem('Não entendi. Fale: despesa 50 padaria')
@@ -153,7 +154,7 @@ const VoiceTransaction = () => {
         tipo: resultado.tipo,
         status: 'pago'
       }
-      if (resultado.categoriaId) payload.categoriaId = resultado.categoriaId
+      if (resultado.categoriaNome) payload.categoria = resultado.categoriaNome
       await api.post('/transactions', payload)
       setMensagem('✅ Salvo com sucesso!')
       queryClient.invalidateQueries({ queryKey: ['transactions'] })
@@ -201,10 +202,10 @@ const VoiceTransaction = () => {
                 <span className="text-slate-500 text-xs">Descrição</span>
                 <p className="text-white">{resultado.descricao}</p>
               </div>
-              {resultado.categoriaId && (
+              {resultado.categoriaNome && (
                 <div>
                   <span className="text-slate-500 text-xs">Categoria</span>
-                  <p className="text-emerald-400">{categorias.find(c => c.id === resultado.categoriaId)?.nome || 'Detected'}</p>
+                  <p className="text-emerald-400">{resultado.categoriaNome}</p>
                 </div>
               )}
             <button
