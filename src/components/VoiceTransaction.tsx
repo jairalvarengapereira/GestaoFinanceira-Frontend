@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { Mic, MicOff, Loader2, Check, AlertCircle } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
 import api from '../services/api'
 
 interface TransactionResult {
@@ -10,6 +11,7 @@ interface TransactionResult {
 }
 
 const VoiceTransaction = () => {
+  const queryClient = useQueryClient()
   const [texto, setTexto] = useState('')
   const [resultado, setResultado] = useState<TransactionResult | null>(null)
   const [salvando, setSalvando] = useState(false)
@@ -121,10 +123,12 @@ const VoiceTransaction = () => {
       }
       await api.post('/transactions', payload)
       setMensagem('✅ Salvo com sucesso!')
+      queryClient.invalidateQueries({ queryKey: ['transactions'] })
       setTimeout(() => {
         setResultado(null)
         setTexto('')
         setTextoFalado('')
+        setMensagem('')
       }, 2000)
     } catch (error: any) {
       setMensagem(`Erro: ${error?.response?.data?.message || error.message || 'Tente novamente'}`)
