@@ -120,15 +120,25 @@ const VoiceTransaction = () => {
     
     if (partes.length > 0) {
       const ultima = partes[partes.length - 1]
-      for (const [catNome, keywords] of Object.entries(CATEGORIAS_KEYWORDS)) {
-        if (keywords.some(k => ultima.includes(k) || k.includes(ultima))) {
-          categoriaNome = catNome
-          desc = partes.length > 1 ? partes.slice(0, -1).join(' ') : (desc || catNome)
-          break
+      
+      const catEncontrada = categorias.find(c => c.nome.toLowerCase().includes(ultima) || ultima.includes(c.nome.toLowerCase()))
+      if (catEncontrada) {
+        categoriaNome = catEncontrada.nome
+        desc = partes.length > 1 ? partes.slice(0, -1).join(' ') : catEncontrada.nome
+      } else {
+        for (const [catNome, keywords] of Object.entries(CATEGORIAS_KEYWORDS)) {
+          if (keywords.some(k => ultima.includes(k) || k.includes(ultima))) {
+            const catGeral = categorias.find(c => c.nome.toLowerCase() === catNome.toLowerCase())
+            if (catGeral) {
+              categoriaNome = catGeral.nome
+              desc = partes.length > 1 ? partes.slice(0, -1).join(' ') : (desc || catNome)
+              break
+            }
+          }
         }
-      }
-      if (!categoriaNome) {
-        desc = partes.join(' ')
+        if (!categoriaNome) {
+          desc = partes.join(' ')
+        }
       }
     }
     
