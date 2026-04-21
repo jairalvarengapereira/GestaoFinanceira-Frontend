@@ -160,16 +160,18 @@ const VoiceTransaction = () => {
     
     setSalvando(true)
     try {
+      const tipoFormatado = resultado.tipo === 'receita' ? 'receita' : 'despesa'
       const payload = {
         descricao: resultado.descricao,
         valor: Number(resultado.valor),
         data: resultado.data,
-        tipo: resultado.tipo,
+        tipo: tipoFormatado,
         categoriaId: 1,
         status: 'pago'
       }
       console.log('Salvando transação:', payload)
-      await api.post('/transactions', payload)
+      const response = await api.post('/transactions', payload)
+      console.log('Response:', response.data)
       setMensagem('✅ Transação salva com sucesso!')
       setTimeout(() => {
         setMensagem('')
@@ -178,8 +180,9 @@ const VoiceTransaction = () => {
       }, 2000)
     } catch (error: any) {
       console.error('Erro ao salvar:', error)
-      const msg = error?.response?.data?.message || error?.message || error?.response?.statusText || 'Erro desconhecido'
-      setMensagem(`Erro ao salvar: ${msg}`)
+      console.error('Response data:', error?.response?.data)
+      const msg = error?.response?.data?.message || error?.response?.data?.error || error?.message || error?.response?.statusText || 'Erro desconhecido'
+      setMensagem(`Erro: ${msg}`)
     } finally {
       setSalvando(false)
     }
