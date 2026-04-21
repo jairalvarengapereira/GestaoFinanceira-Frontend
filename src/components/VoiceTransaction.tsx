@@ -164,7 +164,10 @@ const VoiceTransaction = () => {
         tipo: resultado.tipo,
         status: 'pago'
       }
-      if (resultado.categoriaNome) payload.categoria = resultado.categoriaNome
+      if (resultado.categoriaNome) {
+        const cat = categorias.find(c => c.nome.toLowerCase() === resultado.categoriaNome.toLowerCase())
+        if (cat) payload.categoriaId = cat.id
+      }
       await api.post('/transactions', payload)
       setMensagem('✅ Salvo com sucesso!')
       queryClient.invalidateQueries({ queryKey: ['transactions'] })
