@@ -185,7 +185,8 @@ const VoiceTransaction = () => {
       }, 2000)
     } catch (error: any) {
       console.error('Erro ao salvar:', error)
-      setMensagem(`Erro: ${error?.response?.data?.message || error.message}`)
+      const msg = error?.response?.data?.message || error?.message || error?.response?.statusText || 'Erro desconhecido'
+      setMensagem(`Erro ao salvar: ${msg}`)
     } finally {
       setSalvando(false)
     }
