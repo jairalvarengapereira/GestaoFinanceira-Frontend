@@ -1,6 +1,4 @@
-import type { Handler, HandlerEvent, HandlerResponse } from '@netlify/functions'
-
-const GIRIAS_VALORES: Record<string, number> = {
+const GIRIAS_VALORES = {
   'cinquentão': 50,
   'cem': 100,
   'duzentão': 200,
@@ -25,7 +23,7 @@ const GIRIAS_VALORES: Record<string, number> = {
   'vinte contos': 20000,
 }
 
-const CATEGORIAS_PALAVRAS_CHAVE: Record<string, string[]> = {
+const CATEGORIAS_PALAVRAS_CHAVE = {
   'Alimentação': ['supermercado', 'mercado', 'comida', 'almoço', 'jantar', 'café', 'lanche', 'pizza', 'hambúrguer', 'restaurante', 'lanchonete', 'delivery', 'ifood', 'rappi', 'uber eats', 'padaria', 'açougue', 'fruteira', 'hortifruti'],
   'Transporte': ['uber', '99', '99pop', 'taxi', 'ônibus', 'metrô', 'combustível', 'gasolina', 'álcool', 'etanol', 'diesel', 'posto', 'estacionamento', 'pedágio', 'ipva', 'seguro carro', 'mecânico', 'lava rapid', 'lavajato'],
   'Lazer': ['cinema', 'teatro', 'show', 'festa', 'balada', 'bar', 'boteco', 'pub', 'karaokê', 'jogo', 'futebol', 'estádio', 'park', 'disney', 'netflix', 'spotify', 'amazon prime', 'globo play'],
@@ -37,14 +35,13 @@ const CATEGORIAS_PALAVRAS_CHAVE: Record<string, string[]> = {
 
 const TERMINOS_ENTRADA = ['recebi', 'recebimento', 'salário', 'bônus', 'comissão', 'lucro', 'ganho', 'entrada', 'depositado', 'depósito', 'pago', 'paguei', 'ganhei', 'liquidado', 'quitação']
 const TERMINOS_SAIDA = ['gastei', 'gasto', 'paguei', 'pague', 'pago', 'despesa', 'saída', 'pagamento', 'boleto', 'conta', 'cobrança']
-
 const CATEGORIA_OUTROS = 'Outros'
 
-function extrairValor(texto: string): { valor: number; confianca: number } {
+function extrairValor(texto) {
   const textoLower = texto.toLowerCase()
   
   const regexNumeros = /(?:r?\$?\s*)?(\d+(?:[.,]\d{1,2})?)\s*(?:reais?|r\$)?/gi
-  const matches: number[] = []
+  const matches = []
   let match
   
   while ((match = regexNumeros.exec(texto)) !== null) {
@@ -68,7 +65,7 @@ function extrairValor(texto: string): { valor: number; confianca: number } {
   return { valor: 0, confianca: 0 }
 }
 
-function extrairTipo(texto: string): { tipo: 'receita' | 'despesa'; confianca: number } {
+function extrairTipo(texto) {
   const textoLower = texto.toLowerCase()
   let scoreEntrada = 0
   let scoreSaida = 0
@@ -89,7 +86,7 @@ function extrairTipo(texto: string): { tipo: 'receita' | 'despesa'; confianca: n
   return { tipo: 'despesa', confianca: 0.5 }
 }
 
-function extrairData(texto: string): { data: string; confianca: number } {
+function extrairData(texto) {
   const textoLower = texto.toLowerCase()
   const hoje = new Date()
   const hojeStr = hoje.toISOString().split('T')[0]
@@ -104,16 +101,10 @@ function extrairData(texto: string): { data: string; confianca: number } {
     return { data: ont.toISOString().split('T')[0], confianca: 1.0 }
   }
   
-  if (textoLower.includes('anteontem') || textoLower.includes('ante-ontem')) {
-    const ant = new Date(hoje)
-    ant.setDate(ant.getDate() - 2)
-    return { data: ant.toISOString().split('T')[0], confianca: 1.0 }
-  }
-  
   return { data: hojeStr, confianca: 0.6 }
 }
 
-function extrairCategoria(texto: string): { categoria: string; confianca: number } {
+function extrairCategoria(texto) {
   const textoLower = texto.toLowerCase()
   
   let melhorCategoria = CATEGORIA_OUTROS
@@ -139,7 +130,7 @@ function extrairCategoria(texto: string): { categoria: string; confianca: number
   return { categoria: CATEGORIA_OUTROS, confianca: 0.4 }
 }
 
-function extrairDescricao(texto: string, categoria: string): string {
+function extrairDescricao(texto, categoria) {
   const textoLower = texto.toLowerCase()
   
   const remover = ['recebi', 'gastei', 'paguei', 'salário', 'bônus', 'de', 'r$', 'r', 'hoje', 'ontem', 'amanhã', 'em', 'no', 'na']
@@ -167,7 +158,7 @@ function extrairDescricao(texto: string, categoria: string): string {
   return desc.charAt(0).toUpperCase() + desc.slice(1)
 }
 
-function processarTranscricao(texto: string) {
+function processarTranscricao(texto) {
   const valorExtraido = extrairValor(texto)
   const tipoExtraido = extrairTipo(texto)
   const dataExtraida = extrairData(texto)
@@ -192,7 +183,7 @@ function processarTranscricao(texto: string) {
   }
 }
 
-const handler: Handler = async function(event: HandlerEvent, _context: HandlerContext): Promise<HandlerResponse> {
+exports.handler = async function(event, context) {
   if (event.httpMethod !== 'POST' && event.httpMethod !== 'GET') {
     return {
       statusCode: 405,
@@ -224,10 +215,4 @@ const handler: Handler = async function(event: HandlerEvent, _context: HandlerCo
       body: JSON.stringify({ error: 'Erro interno' }),
     }
   }
-}
-
-export { handler }
-
-type HandlerContext = {
-  callbackWaitsForEmptyEventLoop: boolean
 }
