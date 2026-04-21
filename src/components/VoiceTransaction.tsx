@@ -8,6 +8,7 @@ interface TransactionResult {
   tipo: 'receita' | 'despesa'
   data: string
   descricao: string
+  categoria?: string
 }
 
 const VoiceTransaction = () => {
@@ -67,6 +68,36 @@ const VoiceTransaction = () => {
     }
   }
 
+  const CATEGORIAS: Record<string, string> = {
+    'padaria': 'Alimentação',
+    'padarias': 'Alimentação',
+    'supermercado': 'Alimentação',
+    'supermercados': 'Alimentação',
+    'mercado': 'Alimentação',
+    'restaurante': 'Alimentação',
+    'lanchonete': 'Alimentação',
+    'ifood': 'Alimentação',
+    'uber eats': 'Alimentação',
+    'cinema': 'Lazer',
+    'netflix': 'Lazer',
+    'spotify': 'Lazer',
+    'uber': 'Transporte',
+    '99': 'Transporte',
+    'gasolina': 'Transporte',
+    'farmacia': 'Saúde',
+    'farmácia': 'Saúde',
+    'médico': 'Saúde',
+    'medico': 'Saúde',
+    'aluguel': 'Moradia',
+    'luz': 'Moradia',
+    'água': 'Moradia',
+    'internet': 'Moradia',
+    'curso': 'Educação',
+    'escola': 'Educação',
+    'salário': 'Outros',
+    'salario': 'Outros',
+  }
+
   const processarTranscricao = (texto: string) => {
     const lower = texto.toLowerCase().trim()
     
@@ -94,16 +125,28 @@ const VoiceTransaction = () => {
       if (lower.includes(palavra)) { valor = val; break }
     }
     
+    let desc = tipo === 'receita' ? 'Receita' : 'Despesa'
+    let categoria = ''
+    
     const palavras = lower.replace(/despesa|receita|gastei|paguei|recebi|ganho|salário|salario|um|uma|dois|duas|três|\d+/g, ' ')
     const partes = palavras.replace(/[^a-záàâãéèêíìîóòôõúùûç\s]/g, ' ').replace(/\s+/g, ' ').trim().split(' ').filter(p => p.length > 2)
-    const desc = partes.length > 0 ? partes.join(' ') : (tipo === 'receita' ? 'Receita' : 'Despesa')
+    
+    if (partes.length > 0) {
+      const ultima = partes[partes.length - 1]
+      if (CATEGORIAS[ultima]) {
+        categoria = CATEGORIAS[ultima]
+        desc = partes.length > 1 ? partes.slice(0, -1).join(' ') : desc
+      } else {
+        desc = partes.join(' ')
+      }
+    }
     
     if (valor > 0) {
       const data = new Date().toISOString().split('T')[0]
-      setResultado({ valor, tipo, data, descricao: desc })
+      setResultado({ valor, tipo, data, descricao: desc, categoria })
       setMensagem('')
     } else {
-      setMensagem('Não entendi. Fale: despesa 50 mercado')
+      setMensagem('Não entendi. Fale: despesa 50 padaria')
     }
   }
 
@@ -113,13 +156,28 @@ const VoiceTransaction = () => {
     setSalvando(true)
     setMensagem('')
     try {
-      const payload = {
+      const payload: any = {
         descricao: resultado.descricao,
         valor: resultado.valor,
         data: resultado.data,
         tipo: resultado.tipo,
         status: 'pago'
       }
+      
+      if (resultado.categoria) {
+        const categoriasMap: Record<string, number> = {
+          'Alimentação': 1,
+          'Transporte': 2,
+          'Lazer': 3,
+          'Saúde': 4,
+          'Moradia': 5,
+          'Educação': 6,
+          'Outros': 7
+        }
+        const catId = categoriasMap[resultado.categoria]
+        if (catId) payload.categoriaId = catId
+      }
+      
       await api.post('/transactions', payload)
       setMensagem('✅ Salvo com sucesso!')
       queryClient.invalidateQueries({ queryKey: ['transactions'] })
