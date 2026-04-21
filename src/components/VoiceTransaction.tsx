@@ -83,7 +83,7 @@ const VoiceTransaction = () => {
     'Outros': []
   }
 
-  const processarTranscricao = (texto: string) => {
+const processarESalvar = (texto: string) => {
     const lower = texto.toLowerCase().trim()
     
     let tipo: 'receita' | 'despesa' = 'despesa'
@@ -110,13 +110,16 @@ const VoiceTransaction = () => {
       if (lower.includes(palavra)) { valor = val; break }
     }
     
+    if (valor <= 0) {
+      setMensagem('Não entendi o valor. Fale: despesa 50 padaria')
+      return
+    }
+    
     let desc = tipo === 'receita' ? 'Receita' : 'Despesa'
-    let categoriaId: number | undefined
+    let categoriaNome = ''
     
     const palavras = lower.replace(/despesa|receita|gastei|paguei|recebi|ganho|salário|salario|um|uma|dois|duas|três|\d+/g, ' ')
     const partes = palavras.replace(/[^a-záàâãéèêíìîóòôõúùûç\s]/g, ' ').replace(/\s+/g, ' ').trim().split(' ').filter(p => p.length > 2)
-    
-    let categoriaNome = ''
     
     if (partes.length > 0) {
       const ultima = partes[partes.length - 1]
@@ -142,49 +145,43 @@ const VoiceTransaction = () => {
       }
     }
     
-    if (valor > 0) {
-      const data = new Date().toISOString().split('T')[0]
-      setResultado({ valor, tipo, data, descricao: desc, categoriaNome })
-      setMensagem('')
-    } else {
-      setMensagem('Não entendi. Fale: despesa 50 padaria')
-    }
-  }
-
-  const salvarTransacao = async () => {
-    if (!resultado) return
+    const data = new Date().toISOString().split('T')[0]
+    const resultadoAuto: TransactionResult = { valor, tipo, data, descricao: desc, categoriaNome }
     
+    setResultado(resultadoAuto)
     setSalvando(true)
-    setMensagem('')
-    try {
-      const payload: any = {
-        descricao: resultado.descricao,
-        valor: resultado.valor,
-        data: resultado.data,
-        tipo: resultado.tipo,
-        status: 'pago'
-      }
-      if (resultado.categoriaNome) {
-        const cat = categorias.find(c => c.nome.toLowerCase() === resultado.categoriaNome.toLowerCase())
-        if (cat) payload.categoriaId = cat.id
-      }
-      await api.post('/transactions', payload)
-      setMensagem('✅ Salvo com sucesso!')
-      queryClient.invalidateQueries({ queryKey: ['transactions'] })
-      setTimeout(() => {
-        setResultado(null)
-        setTexto('')
-        setTextoFalado('')
-        setMensagem('')
-      }, 2000)
-    } catch (error: any) {
-      setMensagem(`Erro: ${error?.response?.data?.message || error.message || 'Tente novamente'}`)
-    } finally {
-      setSalvando(false)
+    
+    const payload: any = {
+      descricao: desc,
+      valor,
+      data,
+      tipo,
+      status: 'pago'
     }
+    if (categoriaNome) {
+      const cat = categorias.find(c => c.nome.toLowerCase() === categoriaNome.toLowerCase())
+      if (cat) payload.categoriaId = cat.id
+    }
+    
+    api.post('/transactions', payload)
+      .then(() => {
+        setMensagem('✅ Salvo automaticamente!')
+        queryClient.invalidateQueries({ queryKey: ['transactions'] })
+        setTimeout(() => {
+          setResultado(null)
+          setTexto('')
+          setTextoFalado('')
+          setMensagem('')
+        }, 2000)
+      })
+      .catch((error: any) => {
+        setMensagem(`Erro: ${error?.response?.data?.message || error.message}`)
+        setResultado(null)
+      })
+      .finally(() => setSalvando(false))
   }
 
-  return (
+return (
     <div className="premium-card p-6">
       <div className="flex items-center gap-3 mb-4">
         <div className="p-3 bg-sky-500/20 rounded-xl">
@@ -192,13 +189,14 @@ const VoiceTransaction = () => {
         </div>
         <div>
           <h3 className="text-xl font-bold">Transação por Voz</h3>
-          <p className="text-slate-400 text-sm">Clique no microfone e fale</p>
+          <p className="text-slate-400 text-sm">Fale e salva automático</p>
         </div>
       </div>
 
       <div className="space-y-4">
-        {resultado ? (
+        {resultado && (
           <div className="p-4 bg-slate-800/50 rounded-xl space-y-3">
+            {salvando && <div className="flex items-center gap-2 text-sky-400"><Loader2 className="w-4 h-4 animate-spin" /><span>Salvando...</span></div>}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <span className="text-slate-500 text-xs">Tipo</span>
@@ -211,26 +209,23 @@ const VoiceTransaction = () => {
                 <p className="text-xl font-bold">R$ {resultado.valor.toFixed(2)}</p>
               </div>
             </div>
-<div>
-                <span className="text-slate-500 text-xs">Descrição</span>
-                <p className="text-white">{resultado.descricao}</p>
+            <div>
+              <span className="text-slate-500 text-xs">Descrição</span>
+              <p className="text-white">{resultado.descricao}</p>
+            </div>
+            {resultado.categoriaNome && (
+              <div>
+                <span className="text-slate-500 text-xs">Categoria</span>
+                <p className="text-emerald-400">{resultado.categoriaNome}</p>
               </div>
-              {resultado.categoriaNome && (
-                <div>
-                  <span className="text-slate-500 text-xs">Categoria</span>
-                  <p className="text-emerald-400">{resultado.categoriaNome}</p>
-                </div>
-              )}
-            <button
-              onClick={salvarTransacao}
-              disabled={salvando}
-              className="w-full btn-primary py-3 flex items-center justify-center gap-2"
-            >
-              {salvando ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
-              {salvando ? 'Salvando...' : 'Salvar Transação'}
-            </button>
+            )}
+            <div className="pt-2 border-t border-slate-700">
+              <span className="text-xs text-slate-500">Você pode editar na lista de transações</span>
+            </div>
           </div>
-        ) : (
+        )}
+
+        {!resultado && (
           <>
             <div className="flex gap-2">
               <input
@@ -262,18 +257,18 @@ const VoiceTransaction = () => {
             )}
 
             <button
-              onClick={() => texto && processarTranscricao(texto)}
-              disabled={!texto.trim()}
+              onClick={() => texto && processarESalvar(texto)}
+              disabled={!texto.trim() || salvando}
               className="w-full btn-primary py-3"
             >
-              Processar
+              Salvar Agora
             </button>
 
             <div className="flex flex-wrap gap-2 text-xs text-slate-500">
               <span>Exemplos:</span>
-              <button onClick={() => { setTexto('despesa 50 supermercado'); processarTranscricao('despesa 50 supermercado') }} className="px-2 py-1 bg-slate-800 rounded-full hover:bg-slate-700">despesa 50</button>
-              <button onClick={() => { setTexto('receita 1000 salário'); processarTranscricao('receita 1000 salário') }} className="px-2 py-1 bg-slate-800 rounded-full hover:bg-slate-700">receita 1000</button>
-              <button onClick={() => { setTexto('gastei 30 cinema'); processarTranscricao('gastei 30 cinema') }} className="px-2 py-1 bg-slate-800 rounded-full hover:bg-slate-700">gastei 30</button>
+              <button onClick={() => processarESalvar('despesa 50 supermercado')} className="px-2 py-1 bg-slate-800 rounded-full hover:bg-slate-700">despesa 50</button>
+              <button onClick={() => processarESalvar('receita 1000 salário')} className="px-2 py-1 bg-slate-800 rounded-full hover:bg-slate-700">receita 1000</button>
+              <button onClick={() => processarESalvar('gastei 30 cinema')} className="px-2 py-1 bg-slate-800 rounded-full hover:bg-slate-700">gastei 30</button>
             </div>
           </>
         )}
