@@ -47,8 +47,7 @@ const VoiceTransaction = () => {
     recognition.onresult = (event: any) => {
       const transcript = event.results[0][0].transcript
       setTextoFalado(transcript)
-      setTexto(transcript)
-      setTimeout(() => processarTranscricao(transcript), 300)
+      setTimeout(() => processarESalvar(transcript), 300)
     }
 
     recognition.onerror = (event: any) => {
@@ -234,6 +233,7 @@ return (
                 onChange={(e) => setTexto(e.target.value)}
                 placeholder="Fale ou digite: despesa 50 mercado"
                 className="flex-1 bg-slate-900/50 border border-slate-700/50 rounded-xl py-3 px-4"
+                onKeyDown={(e) => e.key === 'Enter' && texto && processarESalvar(texto)}
               />
               <button
                 onClick={gravando ? pararGravacao : iniciarGravacao}
@@ -241,6 +241,14 @@ return (
               >
                 {gravando ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
               </button>
+              {texto && (
+                <button
+                  onClick={() => processarESalvar(texto)}
+                  className="btn-primary px-4"
+                >
+                  Salvar
+                </button>
+              )}
             </div>
 
             {gravando && (
@@ -255,14 +263,6 @@ return (
                 Você disse: "{textoFalado}"
               </div>
             )}
-
-            <button
-              onClick={() => texto && processarESalvar(texto)}
-              disabled={!texto.trim() || salvando}
-              className="w-full btn-primary py-3"
-            >
-              Salvar Agora
-            </button>
 
             <div className="flex flex-wrap gap-2 text-xs text-slate-500">
               <span>Exemplos:</span>
