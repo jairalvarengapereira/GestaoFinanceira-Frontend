@@ -160,18 +160,15 @@ const VoiceTransaction = () => {
     
     setSalvando(true)
     try {
-      const tipoFormatado = resultado.tipo === 'receita' ? 'receita' : 'despesa'
       const payload = {
         descricao: resultado.descricao,
-        valor: Number(resultado.valor),
+        valor: resultado.valor,
         data: resultado.data,
-        tipo: tipoFormatado,
-        categoriaId: 1,
+        tipo: resultado.tipo,
         status: 'pago'
       }
-      console.log('Salvando transação:', payload)
-      const response = await api.post('/transactions', payload)
-      console.log('Response:', response.data)
+      console.log('Payload:', JSON.stringify(payload))
+      await api.post('/transactions', payload)
       setMensagem('✅ Transação salva com sucesso!')
       setTimeout(() => {
         setMensagem('')
