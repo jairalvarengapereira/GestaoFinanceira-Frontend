@@ -1,7 +1,7 @@
 import { Plus, Search, Loader2, Trash2, Pencil, Mic } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState, useEffect } from 'react'
-import VoiceTransaction from '../components/VoiceTransaction'
+import VoiceFAB from '../components/VoiceFAB'
 import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
 import TransactionModal from '../components/TransactionModal'
@@ -11,7 +11,6 @@ const Transactions = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<any>(null)
   const [tipoTransacao, setTipoTransacao] = useState<'receita' | 'despesa'>('despesa')
-  const [showVoice, setShowVoice] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const queryClient = useQueryClient()
   
@@ -78,13 +77,6 @@ const Transactions = () => {
           <p className="text-slate-400 mt-1">Gerencie seu histórico financeiro aqui.</p>
         </div>
         <button 
-          onClick={() => setShowVoice(!showVoice)}
-          className={`btn-primary flex items-center gap-2 ${showVoice ? 'bg-sky-500/20 border border-sky-500/50' : ''}`}
-        >
-          <Mic className="w-5 h-5" />
-          {showVoice ? 'Fechar' : 'Voz'}
-        </button>
-        <button 
           onClick={() => {
             setTipoTransacao('despesa')
             setIsModalOpen(true)
@@ -96,7 +88,7 @@ const Transactions = () => {
         </button>
       </header>
 
-      {showVoice && <VoiceTransaction />}
+      <VoiceFAB />
 
       <div className="premium-card">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
