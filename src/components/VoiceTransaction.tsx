@@ -156,28 +156,14 @@ const VoiceTransaction = () => {
     setSalvando(true)
     setMensagem('')
     try {
-      const payload: any = {
+      const payload = {
         descricao: resultado.descricao,
         valor: resultado.valor,
         data: resultado.data,
         tipo: resultado.tipo,
         status: 'pago'
       }
-      
-      if (resultado.categoria) {
-        const categoriasMap: Record<string, number> = {
-          'Alimentação': 1,
-          'Transporte': 2,
-          'Lazer': 3,
-          'Saúde': 4,
-          'Moradia': 5,
-          'Educação': 6,
-          'Outros': 7
-        }
-        const catId = categoriasMap[resultado.categoria]
-        if (catId) payload.categoriaId = catId
-      }
-      
+      console.log('Payload:', payload)
       await api.post('/transactions', payload)
       setMensagem('✅ Salvo com sucesso!')
       queryClient.invalidateQueries({ queryKey: ['transactions'] })
