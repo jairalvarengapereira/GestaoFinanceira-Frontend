@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Mic, Loader2, Check, AlertCircle } from 'lucide-react'
+import { useState, useRef } from 'react'
+import { Mic, MicOff, Loader2, Check, AlertCircle } from 'lucide-react'
 import api from '../services/api'
 
 interface TransactionResult {
@@ -17,16 +17,68 @@ const VoiceTransaction = () => {
   const [loading, setLoading] = useState(false)
   const [salvando, setSalvando] = useState(false)
   const [mensagem, setMensagem] = useState('')
+  const [gravando, setGravando] = useState(false)
+  const recognitionRef = useRef<any>(null)
 
-  const testarProcessamento = async () => {
-    if (!texto.trim()) return
+  const iniciarGravacao = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      setMensagem('Seu navegador não suporta reconhecimento de voz.')
+      return
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    const recognition = new SpeechRecognition()
+    
+    recognition.lang = 'pt-BR'
+    recognition.interimResults = false
+    recognition.maxAlternatives = 1
+
+    recognition.onstart = () => {
+      setGravando(true)
+      setMensagem('')
+    }
+
+    recognition.onend = () => {
+      setGravando(false)
+    }
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript
+      setTexto(transcript)
+      setTimeout(() => testarProcessamento(transcript), 500)
+    }
+
+    recognition.onerror = (event: any) => {
+      console.error('Erro no reconhecimento:', event.error)
+      setGravando(false)
+      if (event.error === 'no-speech') {
+        setMensagem('Nenhuma fala detectada. Tente novamente.')
+      } else {
+        setMensagem('Erro no reconhecimento de voz.')
+      }
+    }
+
+    recognitionRef.current = recognition
+    recognition.start()
+  }
+
+  const pararGravacao = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop()
+      setGravando(false)
+    }
+  }
+
+  const testarProcessamento = async (textoInput?: string) => {
+    const textoParaProcessar = textoInput || texto
+    if (!textoParaProcessar.trim()) return
     
     setLoading(true)
     setMensagem('')
     
     try {
       const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://gestaofinanceira.netlify.app'
-      const response = await fetch(`${baseUrl}/.netlify/functions/processar-transacao?texto=${encodeURIComponent(texto)}`)
+      const response = await fetch(`${baseUrl}/.netlify/functions/processar-transacao?texto=${encodeURIComponent(textoParaProcessar)}`)
       const data = await response.json()
       setResultado(data)
     } catch (error) {
@@ -78,34 +130,60 @@ const VoiceTransaction = () => {
         </div>
         <div>
           <h3 className="text-xl font-bold">Transação por Voz</h3>
-          <p className="text-slate-400 text-sm">Digite ou fale sua transação</p>
+          <p className="text-slate-400 text-sm">Clique no microfone e fale sua transação</p>
         </div>
       </div>
 
       <div className="space-y-4">
         <div className="flex gap-2">
-          <input
-            type="text"
-            value={texto}
-            onChange={(e) => setTexto(e.target.value)}
-            placeholder="Ex: gastei 50 no supermercado hoje"
-            className="flex-1 bg-slate-900/50 border border-slate-700/50 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
-            onKeyDown={(e) => e.key === 'Enter' && testarProcessamento()}
-          />
-          <button
-            onClick={testarProcessamento}
-            disabled={loading || !texto.trim()}
-            className="btn-primary px-4 flex items-center gap-2"
-          >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Processar'}
-          </button>
+          <div className="flex-1 relative">
+            <input
+              type="text"
+              value={texto}
+              onChange={(e) => setTexto(e.target.value)}
+              placeholder="Ex: gastei 50 no supermercado hoje"
+              className="w-full bg-slate-900/50 border border-slate-700/50 rounded-xl py-3 pl-4 pr-24 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+              onKeyDown={(e) => e.key === 'Enter' && testarProcessamento()}
+            />
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
+              <button
+                onClick={gravando ? pararGravacao : iniciarGravacao}
+                className={`p-2 rounded-lg transition-all ${
+                  gravando 
+                    ? 'bg-rose-500/20 text-rose-400 animate-pulse' 
+                    : 'bg-sky-500/20 text-sky-400 hover:bg-sky-500/30'
+                }`}
+                title={gravando ? 'Parar' : 'Gravar'}
+              >
+                {gravando ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+              </button>
+              <button
+                onClick={() => testarProcessamento()}
+                disabled={loading || !texto.trim()}
+                className="btn-primary px-3 py-1 flex items-center gap-1 text-sm"
+              >
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Processar'}
+              </button>
+            </div>
+          </div>
         </div>
 
+        {gravando && (
+          <div className="flex items-center gap-2 text-rose-400 animate-pulse">
+            <div className="w-2 h-2 bg-rose-400 rounded-full" />
+            <span className="text-sm">Ouvindo... Fale agora!</span>
+          </div>
+        )}
+
         <div className="flex flex-wrap gap-2">
+          <span className="text-xs text-slate-500 py-1">Exemplos:</span>
           {exemplos.map((ex, i) => (
             <button
               key={i}
-              onClick={() => setTexto(ex)}
+              onClick={() => {
+                setTexto(ex)
+                testarProcessamento(ex)
+              }}
               className="text-xs px-3 py-1 bg-slate-800 hover:bg-slate-700 rounded-full text-slate-400 transition-colors"
             >
               {ex}
@@ -170,9 +248,11 @@ const VoiceTransaction = () => {
           </div>
         )}
 
-        {mensagem && (
+        {mensagem && !gravando && (
           <div className={`p-3 rounded-xl flex items-center gap-2 ${
-            mensagem.includes('sucesso') ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'
+            mensagem.includes('sucesso') ? 'bg-emerald-500/20 text-emerald-400' : 
+            mensagem.includes('ouvindo') ? 'bg-sky-500/20 text-sky-400' :
+            'bg-rose-500/20 text-rose-400'
           }`}>
             {mensagem.includes('sucesso') ? <Check className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
             {mensagem}
