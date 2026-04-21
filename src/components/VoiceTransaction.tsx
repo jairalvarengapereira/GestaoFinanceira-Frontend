@@ -160,7 +160,16 @@ const VoiceTransaction = () => {
     
     setSalvando(true)
     try {
-      await api.post('/transactions', {
+      const payload = {
+        descricao: resultado.descricao,
+        valor: Number(resultado.valor),
+        data: resultado.data,
+        tipo: resultado.tipo,
+        categoriaId: 1,
+        status: 'pago'
+      }
+      console.log('Salvando transação:', payload)
+      await api.post('/transactions', payload)
         descricao: resultado.descricao,
         valor: resultado.valor,
         data: resultado.data,
@@ -174,8 +183,9 @@ const VoiceTransaction = () => {
         setTexto('')
         setResultado(null)
       }, 2000)
-    } catch (error) {
-      setMensagem('Erro ao salvar transação.')
+    } catch (error: any) {
+      console.error('Erro ao salvar:', error)
+      setMensagem(`Erro: ${error?.response?.data?.message || error.message}`)
     } finally {
       setSalvando(false)
     }
