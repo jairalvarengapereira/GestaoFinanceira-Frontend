@@ -69,6 +69,74 @@ const VoiceTransaction = () => {
     }
   }
 
+  const processarTextoLocal = (textoInput: string) => {
+    const textoLower = textoInput.toLowerCase()
+    
+    const valorExtraido = { valor: 0, confianca: 0 }
+    const regexNumeros = /(\d+(?:[.,]\d{1,2})?)/gi
+    const matches = textoInput.match(regexNumeros)
+    if (matches) {
+      const numeros = matches.map(n => parseFloat(n.replace(',', '.'))).filter(n => !isNaN(n) && n > 0)
+      if (numeros.length > 0) {
+        valorExtraido.valor = Math.max(...numeros)
+        valorExtraido.confianca = 0.95
+      }
+    }
+    
+    const gurias: Record<string, number> = { 'cinquentão': 50, 'cem': 100, 'duzentão': 200, 'trezentão': 300, 'quatrocentão': 400, 'quinhentão': 500, 'mil': 1000, 'vinte paus': 20, 'trinta paus': 30, 'quarenta paus': 40, 'cinquenta paus': 50, 'cem paus': 100, 'dois contos': 2000, 'três contos': 3000 }
+    for (const [palavra, valor] of Object.entries(gurias)) {
+      if (textoLower.includes(palavra)) {
+        valorExtraido.valor = valor
+        valorExtraido.confianca = 0.7
+        break
+      }
+    }
+    
+    const termosEntrada = ['recebi', 'recebimento', 'salário', 'bônus', 'comissão', 'lucro', 'ganho', 'entrada', 'depositado']
+    const termosSaida = ['gastei', 'gasto', 'paguei', 'pague', 'despesa', 'saída', 'pagamento', 'boleto']
+    const tipo = termosEntrada.some(t => textoLower.includes(t)) ? 'receita' : termosSaida.some(t => textoLower.includes(t)) ? 'despesa' : 'despesa'
+    
+    const palavrasCategoria: Record<string, string[]> = {
+      'Alimentação': ['supermercado', 'mercado', 'comida', 'almoço', 'jantar', 'café', 'lanche', 'pizza', 'hambúrguer', 'restaurante', 'lanchonete', 'delivery', 'ifood', 'padaria', 'açougue'],
+      'Transporte': ['uber', '99', 'taxi', 'ônibus', 'metrô', 'combustível', 'gasolina', 'álcool', 'posto', 'estacionamento', 'pedágio'],
+      'Lazer': ['cinema', 'teatro', 'show', 'festa', 'balada', 'bar', 'boteco', 'karaokê', 'jogo', 'futebol', 'netflix', 'spotify'],
+      'Saúde': ['farmácia', 'drogaria', 'médico', 'medico', 'consulta', 'exame', 'hospital', 'clínica', 'dentista', 'psicólogo', 'academia'],
+      'Moradia': ['aluguel', 'condomínio', 'luz', 'água', 'internet', 'wifi', 'geladeira', 'móvel'],
+      'Educação': ['curso', 'livro', 'escola', 'universidade', 'faculdade', 'mensalidade', 'colégio'],
+      'Outros': []
+    }
+    let categoria = 'Outros'
+    let melhorScore = 0
+    for (const [cat, palavras] of Object.entries(palavrasCategoria)) {
+      const score = palavras.filter(p => textoLower.includes(p)).length
+      if (score > melhorScore) { melhorScore = score; categoria = cat }
+    }
+    
+    const limpar = ['recebi', 'gastei', 'paguei', 'salário', 'bônus', 'de', 'r$', 'hoje', 'ontem', 'amanhã', 'em', 'no', 'na']
+    let desc = textoLower
+    limpar.forEach(t => desc = desc.replace(new RegExp(`\\b${t}\\b`, 'gi'), ''))
+    desc = desc.replace(/\d+/g, '').replace(/[^a-záàâã��èêíìîóòôõúùûç]/g, ' ').replace(/\s+/g, ' ').trim()
+    if (desc.length < 3) desc = categoria === 'Outros' ? 'Transação' : `Transação - ${categoria}`
+    desc = desc.charAt(0).toUpperCase() + desc.slice(1)
+    
+    const hoje = new Date().toISOString().split('T')[0]
+    let data = hoje
+    if (textoLower.includes('ontem')) {
+      const d = new Date(); d.setDate(d.getDate() - 1); data = d.toISOString().split('T')[0]
+    }
+    
+    const confianza = valorExtraido.confianca * 0.35 + 0.65
+    
+    return {
+      valor: valorExtraido.valor,
+      tipo,
+      data,
+      descricao: desc,
+      categoria,
+      confianca_processamento: Math.round(confianza * 100) / 100
+    }
+  }
+
   const testarProcessamento = async (textoInput?: string) => {
     const textoParaProcessar = textoInput || texto
     if (!textoParaProcessar.trim()) return
@@ -77,10 +145,8 @@ const VoiceTransaction = () => {
     setMensagem('')
     
     try {
-      const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://gestaofinanceira.netlify.app'
-      const response = await fetch(`${baseUrl}/.netlify/functions/processar-transacao?texto=${encodeURIComponent(textoParaProcessar)}`)
-      const data = await response.json()
-      setResultado(data)
+      const result = processarTextoLocal(textoParaProcessar)
+      setResultado(result)
     } catch (error) {
       setResultado(null)
       setMensagem('Erro ao processar. Tente novamente.')
