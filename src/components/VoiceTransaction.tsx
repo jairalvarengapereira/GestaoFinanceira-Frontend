@@ -94,10 +94,9 @@ const VoiceTransaction = () => {
       if (lower.includes(palavra)) { valor = val; break }
     }
     
-    let desc = lower.replace(/despesa|receita|gastei|paguei|recebi|ganho|salário|salario|um|uma|dois|duas|três|\d+/g, ' ')
-    desc = desc.replace(/[^a-záàâãéèêíìîóòôõúùûç]/g, ' ').replace(/\s+/g, ' ').trim()
-    
-    if (!desc) desc = tipo === 'receita' ? 'Receita' : 'Despesa'
+    const palavras = lower.replace(/despesa|receita|gastei|paguei|recebi|ganho|salário|salario|um|uma|dois|duas|três|\d+/g, ' ')
+    const partes = palavras.replace(/[^a-záàâãéèêíìîóòôõúùûç\s]/g, ' ').replace(/\s+/g, ' ').trim().split(' ').filter(p => p.length > 2)
+    const desc = partes.length > 0 ? partes.join(' ') : (tipo === 'receita' ? 'Receita' : 'Despesa')
     
     if (valor > 0) {
       const data = new Date().toISOString().split('T')[0]
