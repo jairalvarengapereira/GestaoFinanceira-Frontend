@@ -36,34 +36,27 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
   }
 
   const loginBiometrico = async () => {
-    const credenciaisEmail = localStorage.getItem('@SaaS:email')
-    const credenciaisSenha = localStorage.getItem('@SaaS:senha')
+    const credenciaisEmail = localStorage.getItem('@SaaS:email')?.trim()
+    const credenciaisSenha = localStorage.getItem('@SaaS:senha')?.trim()
     
     if (!credenciaisEmail || !credenciaisSenha) {
       setError('Faça login manual primeiro para salvar credenciais')
       return
     }
     
-    // Verifica se tem credenciais salvas
+    setIsLoading(true)
+    setError('')
+    
     try {
-      if (navigator.credentials && navigator.credentials.get) {
-        const credencial = await navigator.credentials.get({
-          password: true
-        })
-        if (credencial) {
-          setEmail(credenciaisEmail)
-          setSenha(credenciaisSenha)
-          await handleSubmit()
-          return
-        }
-      }
-      
-      // Fallback: usa as credenciais do localStorage
-      setEmail(credenciaisEmail)
-      setSenha(credenciaisSenha)
-      await handleSubmit()
-    } catch (err) {
-      setError('Biometria cancelada ou indisponível')
+      const response = await api.post('/auth/login', { email: credenciaisEmail, senha: credenciaisSenha })
+      const { token, user } = response.data
+      localStorage.setItem('@SaaS:token', token)
+      localStorage.setItem('@SaaS:user', JSON.stringify(user))
+      onLogin()
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Erro ao entrar com biometria')
+    } finally {
+      setIsLoading(false)
     }
   }
 
