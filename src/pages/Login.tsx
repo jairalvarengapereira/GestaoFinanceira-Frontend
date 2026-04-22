@@ -43,27 +43,7 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
       return
     }
     
-    // Tenta usar WebAuthn para confirmação biométrica real
-    if (navigator.credentials && navigator.credentials.get) {
-      try {
-        await navigator.credentials.get({
-          mediation: 'required',
-          publicKey: {
-            challenge: new TextEncoder().encode('biometria-confirma'),
-          }
-        })
-        // Se passou na biometria, faz login
-        await handleSubmitDirect(credenciaisEmail, credenciaisSenha)
-        return
-      } catch (err) {
-        // Biometria cancelada ou indisponível
-        if (errName !== 'NotAllowedError') {
-          console.log('Biometria não disponível, usando confirma')
-        }
-      }
-    }
-    
-    // Fallback: mostra tela de confirmação
+    // Mostra tela de confirmação para segurança extra
     setEmailConfirmacao(credenciaisEmail)
     setMostrarConfirmacao(true)
   }
@@ -103,8 +83,8 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
             <div className="w-20 h-20 mx-auto mb-4 bg-emerald-500/20 rounded-full flex items-center justify-center">
               <Smartphone className="w-10 h-10 text-emerald-400" />
             </div>
-            <h2 className="text-xl font-bold mb-2">Confirmar Biometria</h2>
-            <p className="text-slate-400 mb-6">Confirme sua identidade para continuar</p>
+            <h2 className="text-xl font-bold mb-2">Olá, {emailConfirmacao.split('@')[0]}!</h2>
+            <p className="text-slate-400 mb-6">Toque em Confirmar para entrar</p>
             
             <button 
               onClick={handleConfirmarBiometria}
@@ -118,7 +98,7 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
               onClick={() => { setMostrarConfirmacao(false); setEmail(''); setSenha('') }}
               className="w-full mt-3 py-3 text-slate-400 hover:text-white"
             >
-              Cancelar
+              Não sou eu
             </button>
           </div>
         </div>
