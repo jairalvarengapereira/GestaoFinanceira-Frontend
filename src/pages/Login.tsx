@@ -16,7 +16,9 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
     setError('')
 
     try {
+      console.log('Tentando login com:', email, senha)
       const response = await api.post('/auth/login', { email, senha })
+      console.log('Resposta:', response.data)
       const { token, user } = response.data
       
       localStorage.setItem('@SaaS:token', token)
@@ -26,7 +28,8 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
       
       onLogin()
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Erro ao entrar. Tente novamente.')
+      console.error('Erro:', err)
+      setError(err.response?.data?.error || err.message || 'Erro ao entrar. Tente novamente.')
     } finally {
       setIsLoading(false)
     }
