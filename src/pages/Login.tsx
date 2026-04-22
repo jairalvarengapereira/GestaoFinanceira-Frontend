@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff, Smartphone } from 'lucide-react'
+import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff, Smartphone, Fingerprint } from 'lucide-react'
 import api from '../services/api'
 
 const Login = ({ onLogin }: { onLogin: () => void }) => {
@@ -9,93 +9,71 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
   const [mostrarSenha, setMostrarSenha] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [mostrarConfirmacao, setMostrarConfirmacao] = useState(false)
-  const [emailConfirmacao, setEmailConfirmacao] = useState('')
-  const [senhaConfirmacao, setSenhaConfirmacao] = useState('')
+  const [biometriaAberta, setBiometriaAberta] = useState(false)
 
-  const handleSubmit = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault()
+  const handleLogin = async (emailVal: string, senhaVal: string) => {
     setIsLoading(true)
     setError('')
 
     try {
-      const response = await api.post('/auth/login', { email, senha })
+      const response = await api.post('/auth/login', { email: emailVal, senha: senhaVal })
       const { token, user } = response.data
       
       localStorage.setItem('@SaaS:token', token)
       localStorage.setItem('@SaaS:user', JSON.stringify(user))
-      localStorage.setItem('@SaaS:email', email.trim())
+      localStorage.setItem('@SaaS:email', emailVal)
       
       onLogin()
     } catch (err: any) {
-      setError(err.response?.data?.error || err.message || 'Erro ao entrar. Tente novamente.')
+      setError(err.response?.data?.error || 'Erro ao entrar. Tente novamente.')
     } finally {
       setIsLoading(false)
     }
   }
 
-  const loginBiometrico = async () => {
-    // Tenta usar biometria real do dispositivo
+  const handleEmailSenha = (e: React.FormEvent) => {
+    e.preventDefault()
+    handleLogin(email, senha)
+  }
+
+  const handleBiometria = async () => {
+    const emailSalvo = localStorage.getItem('@SaaS:email')
+    if (!emailSalvo) {
+      setError('Faça login com email/senha uma vez primeiro')
+      return
+    }
+    
+    setBiometriaAberta(true)
+    
     try {
+      // Tenta biometria real do dispositivo
       if (navigator.credentials && navigator.credentials.get) {
-        // Pede biometria ao dispositivo
-        const credencial = await navigator.credentials.get({
-          mediation: 'optional',
+        await navigator.credentials.get({
+          mediation: 'required',
           publicKey: {
-            challenge: new TextEncoder().encode('biometria-login-' + Date.now()),
+            challenge: new TextEncoder().encode('login-' + Date.now()),
             rp: { name: 'GestaoFinanceira' },
             userVerification: 'required'
           }
         })
-        
-        if (credencial) {
-          // Biometria aprovada! Usa credenciais salvas
-          const credenciaisEmail = localStorage.getItem('@SaaS:email')?.trim()
-          const credenciaisSenha = localStorage.getItem('@SaaS:senha')?.trim()
-          
-          if (credenciaisEmail && credenciaisSenha) {
-            await handleSubmitDirect(credenciaisEmail, credenciaisSenha)
-            return
-          }
-        }
+        // Se chegou aqui, biometria foi confirmada!
+        handleLogin(emailSalvo, '')
+        return
       }
     } catch (err: any) {
-      console.log('Biometria não disponível:', err.message)
+      // Biometria cancelada ou não disponível
+      console.log('Biometria erro:', err)
     }
     
-    // Se biometria falhar, mostra tela de confirmação com senha
-    const credenciaisEmail = localStorage.getItem('@SaaS:email')?.trim()
-    if (credenciaisEmail) {
-      setEmailConfirmacao(credenciaisEmail)
-      setMostrarConfirmacao(true)
-    } else {
-      setError('Faça login manual primeiro')
-    }
+    // Se biometria não funcionou, pede senha uma vez
+    setError('Biometria não disponível. Use email/senha.')
+    setBiometriaAberta(false)
   }
 
-  const handleSubmitDirect = async (emailVal: string, senhaVal: string) => {
-    setIsLoading(true)
-    setError('')
-    try {
-      const response = await api.post('/auth/login', { email: emailVal, senha: senhaVal })
-      const { token, user } = response.data
-      localStorage.setItem('@SaaS:token', token)
-      localStorage.setItem('@SaaS:user', JSON.stringify(user))
-      localStorage.setItem('@SaaS:email', emailVal)
-      onLogin()
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Erro ao entrar')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleConfirmarBiometria = (e: React.FormEvent) => {
-    e.preventDefault()
-    handleSubmitDirect(emailConfirmacao, senhaConfirmacao)
-  }
-
-  if (mostrarConfirmacao) {
+  // Tela de biometria
+  if (biometriaAberta) {
+    const emailSalvo = localStorage.getItem('@SaaS:email') || ''
+    
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
         <div className="w-full max-w-md space-y-8 animate-slide-up">
@@ -105,42 +83,31 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
           </div>
 
           <div className="premium-card text-center">
-            <div className="w-20 h-20 mx-auto mb-4 bg-emerald-500/20 rounded-full flex items-center justify-center">
-              <Smartphone className="w-10 h-10 text-emerald-400" />
+            <div className="w-20 h-20 mx-auto mb-4 bg-sky-500/20 rounded-full flex items-center justify-center">
+              <Fingerprint className="w-10 h-10 text-sky-400" />
             </div>
-            <h2 className="text-xl font-bold mb-2">Olá, {emailConfirmacao.split('@')[0]}!</h2>
-            <p className="text-slate-400 mb-4">Digite sua senha para confirmar</p>
             
-            <form onSubmit={handleConfirmarBiometria} className="space-y-4">
-              <div className="text-sm text-slate-400">
-                E-mail: <span className="text-white">{emailConfirmacao}</span>
-              </div>
-              <input 
-                type="password" 
-                value={senhaConfirmacao}
-                onChange={(e) => setSenhaConfirmacao(e.target.value)}
-                placeholder="Digite sua senha"
-                required
-                className="w-full bg-slate-900/50 border border-slate-700/50 rounded-xl py-3 px-4 text-center"
-              />
-              <p className="text-xs text-slate-500">
-                Use a biometria do seu celular para confirmar
-              </p>
-              
-              <button 
-                type="submit"
-                disabled={isLoading || !senhaConfirmacao}
-                className="w-full btn-primary py-4 flex items-center justify-center gap-2"
-              >
-                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Confirmar'}
-              </button>
-            </form>
+            <h2 className="text-xl font-bold mb-2">Confirme com Biometria</h2>
+            <p className="text-slate-400 mb-6">
+              Use a digital ou Face ID do seu celular para confirmar
+            </p>
             
             <button 
-              onClick={() => { setMostrarConfirmacao(false); setEmail(''); setSenha(''); setSenhaConfirmacao('') }}
+              onClick={handleBiometria}
+              disabled={isLoading}
+              className="w-full btn-primary py-4 flex items-center justify-center gap-2"
+            >
+              {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Tocar para Confirmar'}
+            </button>
+            
+            <button 
+              onClick={() => {
+                setBiometriaAberta(false)
+                setError('')
+              }}
               className="w-full mt-3 py-3 text-slate-400 hover:text-white"
             >
-              Não sou eu
+              Cancelar
             </button>
           </div>
         </div>
@@ -148,6 +115,7 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
     )
   }
 
+  // Tela normal de login
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-md space-y-8 animate-slide-up">
@@ -160,7 +128,7 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
         </div>
 
         <div className="premium-card">
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleEmailSenha} className="space-y-6">
             {error && (
               <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-sm text-center">
                 {error}
@@ -204,15 +172,6 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={loginBiometrico}
-              className="w-full btn-primary bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center gap-2 py-3"
-            >
-              <Smartphone className="w-5 h-5 text-emerald-400" />
-              <span className="text-emerald-400">Entrar com Biometria</span>
-            </button>
-
             <button 
               disabled={isLoading}
               className="w-full btn-primary flex items-center justify-center gap-2 py-3"
@@ -227,6 +186,15 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
               )}
             </button>
           </form>
+
+          <button 
+            onClick={handleBiometria}
+            disabled={isLoading}
+            className="w-full mt-4 btn-primary bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center gap-2 py-3"
+          >
+            <Smartphone className="w-5 h-5 text-emerald-400" />
+            <span className="text-emerald-400">Entrar com Biometria</span>
+          </button>
 
           <p className="mt-8 text-center text-slate-400 text-sm">
             Não tem uma conta?{' '}
