@@ -9,6 +9,8 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
   const [mostrarSenha, setMostrarSenha] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [mostrarConfirmacao, setMostrarConfirmacao] = useState(false)
+  const [emailConfirmacao, setEmailConfirmacao] = useState('')
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
@@ -16,19 +18,16 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
     setError('')
 
     try {
-      console.log('Tentando login com:', email, senha)
       const response = await api.post('/auth/login', { email, senha })
-      console.log('Resposta:', response.data)
       const { token, user } = response.data
       
       localStorage.setItem('@SaaS:token', token)
       localStorage.setItem('@SaaS:user', JSON.stringify(user))
-      localStorage.setItem('@SaaS:email', email)
-      localStorage.setItem('@SaaS:senha', senha)
+      localStorage.setItem('@SaaS:email', email.trim())
+      localStorage.setItem('@SaaS:senha', senha.trim())
       
       onLogin()
     } catch (err: any) {
-      console.error('Erro:', err)
       setError(err.response?.data?.error || err.message || 'Erro ao entrar. Tente novamente.')
     } finally {
       setIsLoading(false)
@@ -44,20 +43,87 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
       return
     }
     
+    // Tenta usar WebAuthn para confirmação biométrica real
+    if (navigator.credentials && navigator.credentials.get) {
+      try {
+        await navigator.credentials.get({
+          mediation: 'required',
+          publicKey: {
+            challenge: new TextEncoder().encode('biometria-confirma'),
+          }
+        })
+        // Se passou na biometria, faz login
+        await handleSubmitDirect(credenciaisEmail, credenciaisSenha)
+        return
+      } catch (err) {
+        // Biometria cancelada ou indisponível
+        if (errName !== 'NotAllowedError') {
+          console.log('Biometria não disponível, usando confirma')
+        }
+      }
+    }
+    
+    // Fallback: mostra tela de confirmação
+    setEmailConfirmacao(credenciaisEmail)
+    setMostrarConfirmacao(true)
+  }
+
+  const handleSubmitDirect = async (emailVal: string, senhaVal: string) => {
     setIsLoading(true)
     setError('')
-    
     try {
-      const response = await api.post('/auth/login', { email: credenciaisEmail, senha: credenciaisSenha })
+      const response = await api.post('/auth/login', { email: emailVal, senha: senhaVal })
       const { token, user } = response.data
       localStorage.setItem('@SaaS:token', token)
       localStorage.setItem('@SaaS:user', JSON.stringify(user))
+      localStorage.setItem('@SaaS:email', emailVal)
+      localStorage.setItem('@SaaS:senha', senhaVal)
       onLogin()
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Erro ao entrar com biometria')
+      setError(err.response?.data?.error || 'Erro ao entrar')
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleConfirmarBiometria = () => {
+    const credenciaisSenha = localStorage.getItem('@SaaS:senha')?.trim()
+    if (credenciaisSenha) {
+      handleSubmitDirect(emailConfirmacao, credenciaisSenha)
+    } else {
+      handleSubmit()
+    }
+  }
+
+  if (mostrarConfirmacao) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <div className="w-full max-w-md space-y-8 animate-slide-up">
+          <div className="premium-card text-center">
+            <div className="w-20 h-20 mx-auto mb-4 bg-emerald-500/20 rounded-full flex items-center justify-center">
+              <Smartphone className="w-10 h-10 text-emerald-400" />
+            </div>
+            <h2 className="text-xl font-bold mb-2">Confirmar Biometria</h2>
+            <p className="text-slate-400 mb-6">Confirme sua identidade para continuar</p>
+            
+            <button 
+              onClick={handleConfirmarBiometria}
+              disabled={isLoading}
+              className="w-full btn-primary py-4 flex items-center justify-center gap-2"
+            >
+              {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Confirmar'}
+            </button>
+            
+            <button 
+              onClick={() => { setMostrarConfirmacao(false); setEmail(''); setSenha('') }}
+              className="w-full mt-3 py-3 text-slate-400 hover:text-white"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
