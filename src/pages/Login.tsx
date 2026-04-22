@@ -25,7 +25,6 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
       localStorage.setItem('@SaaS:token', token)
       localStorage.setItem('@SaaS:user', JSON.stringify(user))
       localStorage.setItem('@SaaS:email', email.trim())
-      localStorage.setItem('@SaaS:senha', senha.trim())
       
       onLogin()
     } catch (err: any) {
@@ -36,17 +35,42 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
   }
 
   const loginBiometrico = async () => {
-    const credenciaisEmail = localStorage.getItem('@SaaS:email')?.trim()
-    const credenciaisSenha = localStorage.getItem('@SaaS:senha')?.trim()
-    
-    if (!credenciaisEmail || !credenciaisSenha) {
-      setError('Faça login manual primeiro para salvar credenciais')
-      return
+    // Tenta usar biometria real do dispositivo
+    try {
+      if (navigator.credentials && navigator.credentials.get) {
+        // Pede biometria ao dispositivo
+        const credencial = await navigator.credentials.get({
+          mediation: 'optional',
+          publicKey: {
+            challenge: new TextEncoder().encode('biometria-login-' + Date.now()),
+            rp: { name: 'GestaoFinanceira' },
+            userVerification: 'required'
+          }
+        })
+        
+        if (credencial) {
+          // Biometria aprovada! Usa credenciais salvas
+          const credenciaisEmail = localStorage.getItem('@SaaS:email')?.trim()
+          const credenciaisSenha = localStorage.getItem('@SaaS:senha')?.trim()
+          
+          if (credenciaisEmail && credenciaisSenha) {
+            await handleSubmitDirect(credenciaisEmail, credenciaisSenha)
+            return
+          }
+        }
+      }
+    } catch (err: any) {
+      console.log('Biometria não disponível:', err.message)
     }
     
-    // Mostra tela de confirmação para segurança extra
-    setEmailConfirmacao(credenciaisEmail)
-    setMostrarConfirmacao(true)
+    // Se biometria falhar, mostra tela de confirmação com senha
+    const credenciaisEmail = localStorage.getItem('@SaaS:email')?.trim()
+    if (credenciaisEmail) {
+      setEmailConfirmacao(credenciaisEmail)
+      setMostrarConfirmacao(true)
+    } else {
+      setError('Faça login manual primeiro')
+    }
   }
 
   const handleSubmitDirect = async (emailVal: string, senhaVal: string) => {
@@ -58,7 +82,6 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
       localStorage.setItem('@SaaS:token', token)
       localStorage.setItem('@SaaS:user', JSON.stringify(user))
       localStorage.setItem('@SaaS:email', emailVal)
-      localStorage.setItem('@SaaS:senha', senhaVal)
       onLogin()
     } catch (err: any) {
       setError(err.response?.data?.error || 'Erro ao entrar')
@@ -89,6 +112,9 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
             <p className="text-slate-400 mb-4">Digite sua senha para confirmar</p>
             
             <form onSubmit={handleConfirmarBiometria} className="space-y-4">
+              <div className="text-sm text-slate-400">
+                E-mail: <span className="text-white">{emailConfirmacao}</span>
+              </div>
               <input 
                 type="password" 
                 value={senhaConfirmacao}
@@ -97,6 +123,9 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
                 required
                 className="w-full bg-slate-900/50 border border-slate-700/50 rounded-xl py-3 px-4 text-center"
               />
+              <p className="text-xs text-slate-500">
+                Use a biometria do seu celular para confirmar
+              </p>
               
               <button 
                 type="submit"
