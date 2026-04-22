@@ -36,43 +36,23 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
     handleLogin(email, senha)
   }
 
-  const handleBiometria = async () => {
+  const handleBiometria = () => {
     const emailSalvo = localStorage.getItem('@SaaS:email')
     if (!emailSalvo) {
       setError('Faça login com email/senha uma vez primeiro')
       return
     }
     
+    setEmail(emailSalvo)
     setBiometriaAberta(true)
-    
-    try {
-      // Tenta biometria real do dispositivo
-      if (navigator.credentials && navigator.credentials.get) {
-        await navigator.credentials.get({
-          mediation: 'required',
-          publicKey: {
-            challenge: new TextEncoder().encode('login-' + Date.now()),
-            rp: { name: 'GestaoFinanceira' },
-            userVerification: 'required'
-          }
-        })
-        // Se chegou aqui, biometria foi confirmada!
-        handleLogin(emailSalvo, '')
-        return
-      }
-    } catch (err: any) {
-      // Biometria cancelada ou não disponível
-      console.log('Biometria erro:', err)
-    }
-    
-    // Se biometria não funcionou, pede senha uma vez
-    setError('Biometria não disponível. Use email/senha.')
-    setBiometriaAberta(false)
   }
 
-  // Tela de biometria
+  // Tela de login rápido (com email salvo)
   if (biometriaAberta) {
-    const emailSalvo = localStorage.getItem('@SaaS:email') || ''
+    const handleBiometriaSubmit = (e: React.FormEvent) => {
+      e.preventDefault()
+      handleLogin(email, senha)
+    }
     
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
@@ -82,32 +62,54 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
             <h1 className="text-3xl font-bold">Gestão Financeira</h1>
           </div>
 
-          <div className="premium-card text-center">
-            <div className="w-20 h-20 mx-auto mb-4 bg-sky-500/20 rounded-full flex items-center justify-center">
-              <Fingerprint className="w-10 h-10 text-sky-400" />
+          <div className="premium-card">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 mx-auto mb-3 bg-emerald-500/20 rounded-full flex items-center justify-center">
+                <Smartphone className="w-8 h-8 text-emerald-400" />
+              </div>
+              <h2 className="text-xl font-bold">Olá, {email.split('@')[0]}!</h2>
+              <p className="text-slate-400 text-sm">Digite sua senha para entrar</p>
             </div>
             
-            <h2 className="text-xl font-bold mb-2">Confirme com Biometria</h2>
-            <p className="text-slate-400 mb-6">
-              Use a digital ou Face ID do seu celular para confirmar
-            </p>
-            
-            <button 
-              onClick={handleBiometria}
-              disabled={isLoading}
-              className="w-full btn-primary py-4 flex items-center justify-center gap-2"
-            >
-              {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Tocar para Confirmar'}
-            </button>
+            <form onSubmit={handleBiometriaSubmit} className="space-y-4">
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                <input 
+                  type={mostrarSenha ? "text" : "password"} 
+                  value={senha}
+                  onChange={(e) => setSenha(e.target.value)}
+                  placeholder="Digite sua senha"
+                  required
+                  autoFocus
+                  className="w-full bg-slate-900/50 border border-slate-700/50 rounded-xl py-3 pl-12 pr-12"
+                />
+                <button
+                  type="button"
+                  onClick={() => setMostrarSenha(!mostrarSenha)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500"
+                >
+                  {mostrarSenha ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+
+              <button 
+                type="submit"
+                disabled={isLoading || !senha}
+                className="w-full btn-primary flex items-center justify-center gap-2 py-3"
+              >
+                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Entrar'}
+              </button>
+            </form>
             
             <button 
               onClick={() => {
                 setBiometriaAberta(false)
-                setError('')
+                setEmail('')
+                setSenha('')
               }}
-              className="w-full mt-3 py-3 text-slate-400 hover:text-white"
+              className="w-full mt-3 py-2 text-slate-400 hover:text-white text-sm"
             >
-              Cancelar
+              Não sou eu
             </button>
           </div>
         </div>
