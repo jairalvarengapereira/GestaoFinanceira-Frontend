@@ -1,16 +1,17 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react'
+import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff, Fingerprint, Smartphone } from 'lucide-react'
 import api from '../services/api'
 
 const Login = ({ onLogin }: { onLogin: () => void }) => {
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
+  const [mostrarSenha, setMostrarSenha] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
     setIsLoading(true)
     setError('')
 
@@ -20,6 +21,8 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
       
       localStorage.setItem('@SaaS:token', token)
       localStorage.setItem('@SaaS:user', JSON.stringify(user))
+      localStorage.setItem('@SaaS:email', email)
+      localStorage.setItem('@SaaS:senha', senha)
       
       onLogin()
     } catch (err: any) {
@@ -27,6 +30,48 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const loginBiometrico = async () => {
+    if (!('BiometricType' in navigator)) {
+      setError('Navegador não suporta biometria')
+      return
+    }
+    
+    try {
+      const credenciaisEmail = localStorage.getItem('@SaaS:email')
+      const credenciaisSenha = localStorage.getItem('@SaaS:senha')
+      
+      if (!credenciaisEmail || !credenciaisSenha) {
+        setError('Faça login manual primeiro para salvar credenciais')
+        return
+      }
+      
+      setEmail(credenciaisEmail)
+      setSenha(credenciaisSenha)
+      await handleSubmit()
+    } catch (err) {
+      setError('Erro na biometria. Use login manual.')
+    }
+  }
+
+  const loginFaceID = async () => {
+    if (!window.FaceID) {
+      setError('FaceID não disponível neste dispositivo')
+      return
+    }
+    
+    const credenciaisEmail = localStorage.getItem('@SaaS:email')
+    const credenciaisSenha = localStorage.getItem('@SaaS:senha')
+    
+    if (!credenciaisEmail || !credenciaisSenha) {
+      setError('Faça login manual primeiro para salvar credenciais')
+      return
+    }
+    
+    setEmail(credenciaisEmail)
+    setSenha(credenciaisSenha)
+    await handleSubmit()
   }
 
   return (
@@ -68,14 +113,32 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
                 <input 
-                  type="password" 
+                  type={mostrarSenha ? "text" : "password"} 
                   value={senha}
                   onChange={(e) => setSenha(e.target.value)}
                   placeholder="••••••••"
                   required
-                  className="w-full bg-slate-900/50 border border-slate-700/50 rounded-xl py-3 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-sky-500/50 transition-all"
+                  className="w-full bg-slate-900/50 border border-slate-700/50 rounded-xl py-3 pl-12 pr-12 focus:outline-none focus:ring-2 focus:ring-sky-500/50 transition-all"
                 />
+                <button
+                  type="button"
+                  onClick={() => setMostrarSenha(!mostrarSenha)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+                >
+                  {mostrarSenha ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={loginBiometrico}
+                className="flex-1 btn-primary bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center gap-2 py-3"
+              >
+                <Fingerprint className="w-5 h-5 text-emerald-400" />
+                <span className="text-emerald-400">Biometria</span>
+              </button>
             </div>
 
             <button 

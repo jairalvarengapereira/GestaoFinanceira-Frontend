@@ -2,6 +2,7 @@ import { useState, useEffect, useLayoutEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { Menu } from 'lucide-react'
 import Sidebar from './components/Sidebar'
+import VoiceFAB from './components/VoiceFAB'
 import Dashboard from './pages/Dashboard'
 import Transactions from './pages/Transactions'
 import Categories from './pages/Categories'
@@ -101,9 +102,11 @@ function App() {
               path="/comparison" 
               element={isAuthenticated ? <Comparison /> : <Navigate to="/login" />} 
             />
-            <Route path="*" element={<Navigate to={isAuthenticated ? "/" : "/login"} />} />
-          </Routes>
-        </main>
+<Route path="*" element={<Navigate to={isAuthenticated ? "/" : "/login"} />} />
+            </Routes>
+            
+            {isAuthenticated && <VoiceFAB />}
+          </main>
       </div>
     </Router>
   )

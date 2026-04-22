@@ -1,7 +1,6 @@
-import { Plus, Search, Loader2, Trash2, Pencil, Mic } from 'lucide-react'
+import { Plus, Search, Loader2, Trash2, Pencil } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState, useEffect } from 'react'
-import VoiceFAB from '../components/VoiceFAB'
 import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
 import TransactionModal from '../components/TransactionModal'
@@ -87,8 +86,6 @@ const Transactions = () => {
           Nova Transação
         </button>
       </header>
-
-      <VoiceFAB />
 
       <div className="premium-card">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
