@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff, Fingerprint, Smartphone } from 'lucide-react'
+import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff, Smartphone } from 'lucide-react'
 import api from '../services/api'
 
 const Login = ({ onLogin }: { onLogin: () => void }) => {
@@ -33,34 +33,6 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
   }
 
   const loginBiometrico = async () => {
-    if (!('BiometricType' in navigator)) {
-      setError('Navegador não suporta biometria')
-      return
-    }
-    
-    try {
-      const credenciaisEmail = localStorage.getItem('@SaaS:email')
-      const credenciaisSenha = localStorage.getItem('@SaaS:senha')
-      
-      if (!credenciaisEmail || !credenciaisSenha) {
-        setError('Faça login manual primeiro para salvar credenciais')
-        return
-      }
-      
-      setEmail(credenciaisEmail)
-      setSenha(credenciaisSenha)
-      await handleSubmit()
-    } catch (err) {
-      setError('Erro na biometria. Use login manual.')
-    }
-  }
-
-  const loginFaceID = async () => {
-    if (!window.FaceID) {
-      setError('FaceID não disponível neste dispositivo')
-      return
-    }
-    
     const credenciaisEmail = localStorage.getItem('@SaaS:email')
     const credenciaisSenha = localStorage.getItem('@SaaS:senha')
     
@@ -69,9 +41,27 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
       return
     }
     
-    setEmail(credenciaisEmail)
-    setSenha(credenciaisSenha)
-    await handleSubmit()
+    // Verifica se tem credenciais salvas
+    try {
+      if (navigator.credentials && navigator.credentials.get) {
+        const credencial = await navigator.credentials.get({
+          password: true
+        })
+        if (credencial) {
+          setEmail(credenciaisEmail)
+          setSenha(credenciaisSenha)
+          await handleSubmit()
+          return
+        }
+      }
+      
+      // Fallback: usa as credenciais do localStorage
+      setEmail(credenciaisEmail)
+      setSenha(credenciaisSenha)
+      await handleSubmit()
+    } catch (err) {
+      setError('Biometria cancelada ou indisponível')
+    }
   }
 
   return (
@@ -130,16 +120,14 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
               </div>
             </div>
 
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={loginBiometrico}
-                className="flex-1 btn-primary bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center gap-2 py-3"
-              >
-                <Fingerprint className="w-5 h-5 text-emerald-400" />
-                <span className="text-emerald-400">Biometria</span>
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={loginBiometrico}
+              className="w-full btn-primary bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center gap-2 py-3"
+            >
+              <Smartphone className="w-5 h-5 text-emerald-400" />
+              <span className="text-emerald-400">Entrar com Biometria</span>
+            </button>
 
             <button 
               disabled={isLoading}
