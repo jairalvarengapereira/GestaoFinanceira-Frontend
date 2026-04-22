@@ -11,6 +11,7 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
   const [error, setError] = useState('')
   const [mostrarConfirmacao, setMostrarConfirmacao] = useState(false)
   const [emailConfirmacao, setEmailConfirmacao] = useState('')
+  const [senhaConfirmacao, setSenhaConfirmacao] = useState('')
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
@@ -66,36 +67,48 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
     }
   }
 
-  const handleConfirmarBiometria = () => {
-    const credenciaisSenha = localStorage.getItem('@SaaS:senha')?.trim()
-    if (credenciaisSenha) {
-      handleSubmitDirect(emailConfirmacao, credenciaisSenha)
-    } else {
-      handleSubmit()
-    }
+  const handleConfirmarBiometria = (e: React.FormEvent) => {
+    e.preventDefault()
+    handleSubmitDirect(emailConfirmacao, senhaConfirmacao)
   }
 
   if (mostrarConfirmacao) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
         <div className="w-full max-w-md space-y-8 animate-slide-up">
+          <div className="flex flex-col items-center gap-4">
+            <img src="/Logo.png?v=3" alt="Logo" className="w-16 h-16 rounded-xl" />
+            <h1 className="text-3xl font-bold">Gestão Financeira</h1>
+          </div>
+
           <div className="premium-card text-center">
             <div className="w-20 h-20 mx-auto mb-4 bg-emerald-500/20 rounded-full flex items-center justify-center">
               <Smartphone className="w-10 h-10 text-emerald-400" />
             </div>
             <h2 className="text-xl font-bold mb-2">Olá, {emailConfirmacao.split('@')[0]}!</h2>
-            <p className="text-slate-400 mb-6">Toque em Confirmar para entrar</p>
+            <p className="text-slate-400 mb-4">Digite sua senha para confirmar</p>
+            
+            <form onSubmit={handleConfirmarBiometria} className="space-y-4">
+              <input 
+                type="password" 
+                value={senhaConfirmacao}
+                onChange={(e) => setSenhaConfirmacao(e.target.value)}
+                placeholder="Digite sua senha"
+                required
+                className="w-full bg-slate-900/50 border border-slate-700/50 rounded-xl py-3 px-4 text-center"
+              />
+              
+              <button 
+                type="submit"
+                disabled={isLoading || !senhaConfirmacao}
+                className="w-full btn-primary py-4 flex items-center justify-center gap-2"
+              >
+                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Confirmar'}
+              </button>
+            </form>
             
             <button 
-              onClick={handleConfirmarBiometria}
-              disabled={isLoading}
-              className="w-full btn-primary py-4 flex items-center justify-center gap-2"
-            >
-              {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Confirmar'}
-            </button>
-            
-            <button 
-              onClick={() => { setMostrarConfirmacao(false); setEmail(''); setSenha('') }}
+              onClick={() => { setMostrarConfirmacao(false); setEmail(''); setSenha(''); setSenhaConfirmacao('') }}
               className="w-full mt-3 py-3 text-slate-400 hover:text-white"
             >
               Não sou eu
